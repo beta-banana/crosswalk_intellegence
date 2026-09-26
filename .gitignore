@@ -1,0 +1,3 @@
+# Downloaded footage is retained locally; only validated, optimized demo copies
+# will be added to the application during implementation.
+demo_assets/videos/

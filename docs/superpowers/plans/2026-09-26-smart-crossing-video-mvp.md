@@ -39,13 +39,21 @@
 - `src/smart_crossing/report.py`: statistics and evidence-linked recommendation rules.
 - `src/smart_crossing/pipeline.py`: chronological orchestration and cached observations for parameter replay.
 - `src/smart_crossing/storage.py`: SQLite report/config persistence.
-- `src/smart_crossing/web.py`, `templates/`, `static/`: local upload, configuration, progress, video overlays, result timeline.
-- `tests/`: focused unit and HTTP integration tests; `demo_assets/README.md` records video provenance and manual truth markers.
+- `src/smart_crossing/web.py`, `templates/`, `static/`: local upload, bundled example selector, configuration, progress, video overlays, result timeline.
+- `tests/`: focused unit and HTTP integration tests; `demo_assets/README.md` records video provenance and manual truth markers; validated demo clips are bundled with the app.
 - `docs/camera-layout.md`: two-camera deployment sketch and assumptions.
 
-## Preflight gate: video and manual truth, before feature work
+## Task 0: Source and verify demonstration footage (about 2 hours; before feature work)
 
-Select one normal clip showing the waiting zone and vehicle approach, plus a clearly labeled failure clip with a ≥3-second blank/frozen segment. Across the prepared clips, require a visible group of at least five and a five-second gap without approaching cars; use separate short clips if needed. Put local files under ignored `demo_assets/videos/`; do not commit third-party or personally identifying footage by default. Record source/provenance, frame size, duration, zone coordinates, and manual timestamps for at least two vehicle crossings, one pedestrian request, the group, and the empty-road gap in `demo_assets/README.md`. If no suitable normal clip is available, acquire or film one before claiming the CV part of MVP works. Budget roughly 2 hours here; this is the project's critical path.
+Codex owns this task. Candidate files have been downloaded to `demo_assets/videos/`; their sources, dimensions, hashes, and visual-review status are in `demo_assets/README.md`. Start with the 55-second single-pedestrian clip and 21-second group clip. The 40-second overhead and 28-second signal clips are reserves. These are candidates, not prevalidated CV examples.
+
+- [ ] **Step 1: Verify footage and provenance.** Recheck the [Pexels license](https://www.pexels.com/license/) and source pages, decode every selected file, and record author, URL, duration, resolution, SHA-256, and allowed app use. Keep attribution visible in the demo UI and documentation. Never imply the creators endorse the project.
+- [ ] **Step 2: Mark ground truth manually.** For each selected clip, record normalized wait/approach/crossing zones and line endpoints; mark at least two vehicle line crossings, one sustained pedestrian request, group size ≥5 where claimed, and any genuine ≥5-second clear approach. Do not infer an empty-road interval from a sparse contact sheet.
+- [ ] **Step 3: Run an early detector smoke test** on representative frames and a short sequence as soon as Task 2's adapter exists. Verify that the expected people and vehicles are detected and tracks remain usable. Replace a candidate promptly if the labels cannot be measured reliably; do not use a hard-coded event trace as evidence of CV.
+- [ ] **Step 4: Prepare delivery files.** Select the smallest quality that still passes the detector check, compress if useful, and bundle those tested files with the application for offline use. Keep the downloaded originals ignored by Git. Build a clearly labeled fault example from a selected clip by inserting ≥3 seconds of black/frozen frames, and record this edit in provenance. The app must offer bundled examples as well as normal upload.
+- [ ] **Step 5: Gate acceptance.** Have at least one normal clip with visible waiting zone and vehicle approach, a separate group example if needed, and a fault example. If a five-second clear approach is absent, find an additional genuine clip or omit that live-video claim and demonstrate the controller rule through tests only. Record exact video timestamps before final rehearsal.
+
+This sourcing task is part of the build, not a dependency delegated to the team. Do the manual review before feature work, then complete detector validation and bundling at the indicated points.
 
 ### Task 1: Video intake and shared contracts (about 3 hours)
 
@@ -111,11 +119,11 @@ Select one normal clip showing the waiting zone and vehicle approach, plus a cle
 
 **Files:** Create `src/smart_crossing/storage.py`, `src/smart_crossing/web.py`, `src/smart_crossing/templates/index.html`, `src/smart_crossing/templates/result.html`, `src/smart_crossing/static/app.js`, `src/smart_crossing/static/style.css`, `tests/test_web.py`.
 
-**Interfaces:** `POST /analyze` accepts a multipart video plus zone/config JSON and returns a local report ID after analysis; `GET /reports/{id}` renders results; `GET /reports/{id}/data` returns structured evidence for charts and overlays; `GET /reports/{id}/video` streams the local upload for playback; `POST /reports/{id}/replay` recalculates phases with changed Config. `ReportStore.save(report: AnalysisReport) -> str` and `.load(report_id: str) -> AnalysisReport` persist report JSON and configuration in SQLite. Keep uploaded video in local temporary storage only while the result page needs playback.
+**Interfaces:** `POST /analyze` accepts a multipart video plus zone/config JSON and returns a local report ID after analysis; the home page also offers packaged demo clips with their prepared zone profiles, using the same analysis pipeline. `GET /reports/{id}` renders results; `GET /reports/{id}/data` returns structured evidence for charts and overlays; `GET /reports/{id}/video` streams the local upload or bundled clip for playback; `POST /reports/{id}/replay` recalculates phases with changed Config. `ReportStore.save(report: AnalysisReport) -> str` and `.load(report_id: str) -> AnalysisReport` persist report JSON and configuration in SQLite. Keep user-uploaded video in local temporary storage only while the result page needs playback.
 
-- [ ] **Step 1: Write failing HTTP tests** `test_rejects_bad_upload_with_message` (4xx plus readable error), `test_upload_creates_report_and_result_page` (success ID and result HTTP 200), `test_result_contains_timeline_stats_and_reason` (report JSON has all three and video route streams bytes), and `test_replay_changes_config_without_detector_call` (new phase times, unchanged detector call count). Use FastAPI TestClient and a stub pipeline.
+- [ ] **Step 1: Write failing HTTP tests** `test_rejects_bad_upload_with_message` (4xx plus readable error), `test_upload_creates_report_and_result_page` (success ID and result HTTP 200), `test_bundled_example_uses_same_pipeline` (bundled clip is selectable and report cites its source), `test_result_contains_timeline_stats_and_reason` (report JSON has all three and video route streams bytes), and `test_replay_changes_config_without_detector_call` (new phase times, unchanged detector call count). Use FastAPI TestClient and a stub pipeline.
 - [ ] **Step 2: Confirm red** with `python -m pytest tests/test_web.py -q`.
-- [ ] **Step 3: Implement storage and UI**. Use a simple prepared-video zone profile with editable normalized coordinates shown over the preview. Show a busy state during synchronous processing, then raw video with canvas box/zone overlays, flow chart, phase timeline, reasons, statistics, quality markers, and 1–2 recommendations. Do not add login, cloud upload, or a generic dashboard framework.
+- [ ] **Step 3: Implement storage and UI**. Offer bundled examples and normal upload. Use a prepared zone profile per example, with editable normalized coordinates shown over the preview. Show a busy state during synchronous processing, then raw video with canvas box/zone overlays, flow chart, phase timeline, reasons, statistics, quality markers, source credit, and 1–2 recommendations. Do not add login, cloud upload, or a generic dashboard framework.
 - [ ] **Step 4: Confirm green** with the same command; expected: all HTTP tests pass and result page loads in a local browser.
 - [ ] **Step 5: Commit** Task 6 files with `feat: present crossing analysis locally`.
 
@@ -123,14 +131,14 @@ Select one normal clip showing the waiting zone and vehicle approach, plus a cle
 
 **Files:** Create `docs/camera-layout.md`, `docs/demo-runbook.md`, `README.md`; update `demo_assets/README.md`.
 
-**Interfaces:** No new runtime API. The runbook gives exact local launch, two clip paths, expected timestamps, and fallback evidence. The layout note shows two cameras on existing supports, wait/approach coverage, count line, occlusion and night-light limitations, plus what must be verified on a real controller and embedded PC.
+**Interfaces:** No new runtime API. The runbook gives exact local launch, packaged example selection, clip paths, expected timestamps, and fallback evidence. The layout note shows two cameras on existing supports, wait/approach coverage, count line, occlusion and night-light limitations, plus what must be verified on a real controller and embedded PC.
 
 - [ ] **Step 1: Record a failing acceptance checklist** in `docs/demo-runbook.md`: normal clip must yield boxes, counts, 2–3 explained decisions, recommendation, and stats; failure clip must yield fallback, never empty-road acceleration. Record the manual truth markers from preflight.
 - [ ] **Step 2: Run `python -m pytest -q` and the full local upload flow**; mark any failed checklist item with observed output, not a promise.
 - [ ] **Step 3: Fix only defects blocking the checklist**, add camera-layout and launch instructions, and record processing time, model name, Python version, and memory on the demo laptop. Smoke-test application startup in a Linux environment if one is available; state clearly whether that test ran. Do not claim embedded-PC performance from laptop or container measurements.
-- [ ] **Step 4: Repeat the full upload flow and test suite**; expected: all tests pass and both clips produce the specified evidence without editing results by hand.
+- [ ] **Step 4: Repeat the full upload and bundled-example flows and test suite offline**; expected: all tests pass and selected clips produce the specified evidence without editing results by hand.
 - [ ] **Step 5: Commit** docs and necessary fixes with `docs: prepare crossing MVP demonstration`.
 
 ## 24-hour cut line
 
-Preflight plus Tasks 1–5 form the functional core. Task 6 may use a plain but readable result page if time tightens; preserve upload, phase timeline, reasons, and statistics before styling. Task 7 reserves final rehearsal time. If CV on the chosen video is unreliable, report that limitation and improve the footage or zones; do not substitute hard-coded detections while claiming the video was analyzed.
+Task 0 plus Tasks 1–5 form the functional core. Task 6 may use a plain but readable result page if time tightens; preserve upload, bundled example selection, phase timeline, reasons, and statistics before styling. Task 7 reserves final rehearsal time. If CV on a chosen video is unreliable, report that limitation and improve the footage or zones; do not substitute hard-coded detections while claiming the video was analyzed.
