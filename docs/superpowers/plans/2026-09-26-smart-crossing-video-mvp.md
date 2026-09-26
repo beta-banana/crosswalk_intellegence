@@ -1,139 +1,162 @@
-# Smart Crossing Video MVP Implementation Plan
+# Smart Crossing Interactive Prototype Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Analyze a prepared video of up to 120 seconds, reproduce causal signal decisions, and show an evidence-linked recommendation and a model comparison with a fixed cycle.
+**Goal:** Deliver a polished local operator console that demonstrates real event aggregation, adaptive signal control, safety fallback, statistics, model comparison, and parameter replay using deterministic detection fixtures.
 
-**Architecture:** One causal pipeline consumes timestamped frames from `FrameSource`: detection and tracking → crossing events → rolling flow estimate → safe phase controller → visible result. The MVP implements `PreparedVideoSource` for repeatable offline demonstrations; a future live camera/RTSP source can provide the same frame contract without changing downstream logic. `Detector` is a narrow adapter point for the colleagues' video module when its output schema arrives. A separate fixed-cycle controller receives the same observed arrivals and requests for a clearly labeled model comparison.
+**Architecture:** `DetectionProvider` yields timestamped `FrameDetections`. The same event aggregator, rolling window, decision engine, phase machine, statistics and frontend consume fixtures now and a CV adapter later. Only the provider changes when the separate video team delivers its module. The browser shows a simulation workspace for fixture data and can later overlay the same normalized boxes on real video.
 
-**Tech Stack:** Python 3.11+, OpenCV, a locally cached lightweight Ultralytics YOLO model with ByteTrack, FastAPI/Jinja2, plain JavaScript/CSS, SQLite, pytest. Keep a CPU path and run the final app without internet. API references: [Ultralytics tracking](https://docs.ultralytics.com/modes/track), [FastAPI uploads](https://fastapi.tiangolo.com/tutorial/request-files/).
+**Tech Stack:** Python 3.11+, FastAPI, Jinja2, SQLite, plain JavaScript/CSS/SVG, pytest. No YOLO, OpenCV, ByteTrack, model weights, video decoding, inference optimization or CV benchmark in this plan. Use the `frontend-design` skill for the operator screen and the `playwright` skill/CLI for browser QA after the UI exists.
 
-**Spec:** `docs/superpowers/specs/2026-09-26-smart-crossing-video-analysis-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-26-smart-crossing-video-analysis-design.md`. This plan implements the application around CV; final video analysis remains an integration milestone after the other team's output schema arrives.
 
 ## Global Constraints
 
-- Prepared-video mode is the MVP frame source, not a separate algorithm. Frames must be processed in timestamp order; a decision at `t` sees no later frame.
-- The production direction is live camera/RTSP through the same `FrameSource` contract. Do not build streaming, reconnect loops, message brokers, or RTSP configuration during this MVP.
-- Source candidates and provenance are recorded in `demo_assets/README.md`; candidates are not yet validated CV examples. Bundled examples and ordinary video upload must use the same pipeline.
-- Default policy: rolling 30-second traffic window, updated each second; five-second healthy empty-road check; car green minimum 15 s; low flow ≤6 vehicles/min with delay ≤5 s; pedestrian wait targets 45 s single and 30 s group; group threshold 5; car warning 3 s; all-red 2 s; pedestrian green 12 s; fallback car green 30 s.
-- Missing, blank, frozen, or untrustworthy video never means zero traffic. Conflicting green signals and skipped clearances are forbidden.
-- The current CV MVP identifies people and ordinary vehicle classes only. Visual similarity to emergency transport does not trigger priority. Reserve optional `vehicle_subtype` and `priority_input` in the event contract for a later verified priority policy; do not implement that policy now.
-- All benefits and delays compared with a fixed cycle are conditional model results for the analyzed episode, never measured improvement in real road capacity.
-- A full run in an available Linux environment is a required completion gate. Embedded-PC throughput remains unverified without that device.
+- Fixtures replace **only detection**. Event counting, 30-second rolling traffic estimate, five-second healthy empty-road check, pedestrian requests, group priority, phase decisions, safety, fallback, statistics, fixed-cycle baseline and parameter replay use production logic.
+- Default virtual timings from the approved spec: car green minimum 15 s; low flow ≤6 vehicles/min with deferral ≤5 s; pedestrian wait targets 45 s single/30 s group; group threshold 5; car warning 3 s; all-red 2 s; pedestrian green 12 s; fallback car green 30 s.
+- Decision at time `t` uses only detections at or before `t`. An unhealthy source is never interpreted as an empty road. No conflicting green signals or skipped clearances.
+- Scenario-derived results are visibly labeled **демонстрационный сценарий**. Baseline differences are **модельная оценка для эпизода**, not measured road-capacity gains.
+- Emergency-vehicle recognition is out of scope. Optional `vehicle_subtype` and `priority_input` are reserved in the contract; visual subtype alone never changes a phase.
+- A future CV adapter must only implement `DetectionProvider`; it must not force changes to events, decision logic, statistics or frontend data shapes.
+- The app must run locally in a browser. A complete run in an available Linux environment is mandatory before declaring this prototype complete; embedded-PC performance remains untested.
+
+## Stable CV boundary
+
+Define `DetectedObject(track_id: str, object_type: Literal["person", "vehicle"], bbox_norm: tuple[float, float, float, float], confidence: float, vehicle_subtype: str | None = None)`. The box is `(x_min, y_min, x_max, y_max)` in `[0,1]`; IDs are stable within a source run. Define `FrameDetections(timestamp_s: float, healthy: bool, objects: tuple[DetectedObject, ...], priority_input: bool | None = None)`. Frames have strictly increasing timestamps. `healthy=False` invalidates the frame's objects for traffic decisions.
+
+`DetectionProvider.iter_detections() -> Iterator[FrameDetections]` is the only upstream interface. `FixtureDetectionProvider(scenario_id)` produces all four demo cases now. Later, `CVDetectionAdapter` maps the other team's classes, track IDs, coordinates, timestamps and source-health signal into this contract; its implementation waits for their sample schema. No real CV code belongs in this plan.
+
+`CachedDetectionProvider(frames: tuple[FrameDetections, ...])` replays an already captured trace for changed parameters. It implements the same interface and prevents fixture generation or a future CV detector from running again during parameter replay.
+
+Document the contract and one JSON example in `docs/interfaces/detection-provider-v1.md`. Validate normalized boxes, confidence, object type, timestamp order and source health at the boundary. If the later CV module has variable frame rate, its adapter preserves timestamps; the aggregator bins them into video seconds.
+
+`Zones` is separate site configuration: normalized waiting, approach and crossing polygons plus a vehicle count line. A fixture scenario supplies its `Zones`; a real crossing will configure them for its camera view. Neither fixture nor CV adapter decides phases.
+
+Fixture timing is deterministic and uses 1-second frames; vehicle boxes move across the count line around each listed arrival, while waiting IDs remain stable until their listed exit. This table fixes the four demo inputs rather than hard-coding their outcomes:
+
+| Scenario | Length | Vehicle arrivals | Pedestrian tracks | Source health |
+| --- | ---: | --- | --- | --- |
+| `normal` | 90 s | t=3, 9, 18, 30, 42, 54, 66 | one waiting from t=10 to 55 | healthy |
+| `group` | 90 s | every 4 s from t=4 through 48 | six waiting from t=8 to 55 | healthy |
+| `empty` | 60 s | none | one waiting from t=2 to 45 | healthy |
+| `failure` | 60 s | t=5, 10 before failure | one waiting from t=8 to 45 | unhealthy t=18–25 inclusive |
+
+## Frontend design direction
+
+Use one operator screen with the **crossing workspace as the focal element**, not an array of equal cards. Suggested tokens, to refine against real screenshots: mist `#E9EFF0` background, deep traffic blue `#173545` structure, signal teal `#16747A` normal action, amber `#D9952B` caution/fallback, red `#B84A46` fault, pale line `#CBD8DA`. Use IBM Plex Sans for controls/text and IBM Plex Mono only for timecodes and measured values; bundle fonts for offline demo if used.
+
+```text
+Scenario + playback controls                         Source/safety status
+┌──────────────────────────── crossing workspace ───────────────────────┐
+│ road, waiting zones, tracked boxes, virtual car/ped signals          │
+└───────────────────────────────────────────────────────────────────────┘
+Current decision + reason          Flow / waiting / elapsed wait
+Phase timeline across full width   Flow chart across same time axis
+Fixed vs adaptive comparison       Evidence-linked recommendation
+```
+
+Keep alignment and time axes consistent. Use compact status bands and clear signal shapes; reserve motion for playback and phase changes, with reduced-motion support. Scenario selection resets the playhead and updates detections, events, phase timeline, numbers and recommendation together. Fault state must be unmistakable without relying on color alone. Before coding, compare the layout against a generic card dashboard and remove decorative cards or animations that do not explain traffic behavior.
+
+Compared with a grid of equal KPI cards, this layout gives the crossing and phase timeline most of the space; that choice makes cause and effect legible during a live jury demonstration.
 
 ## Review Focus
 
-1. Corrupt or >120-second upload: reject it clearly before producing a report (Task 2).
-2. Tracker/event state across consecutive videos: reset per source, so IDs and waiting requests do not leak (Tasks 2–3).
-3. Healthy empty road versus source failure: only healthy absence of vehicles can accelerate pedestrian service (Tasks 3–4).
-4. Group or high flow near a phase boundary: preserve min green, warning, all-red and pedestrian clearance, with zero conflicting greens (Task 4).
-5. Window/baseline comparison: run on identical observed events, report conditional metrics and zero safety violations, and never call them measured road gains (Task 5).
+1. Switching scenarios must change underlying detections and controller decisions, not just headings or colors (Tasks 1–2).
+2. Repeated track IDs across frames count once; IDs from a new provider run cannot leak into the previous scenario (Tasks 1 and 3).
+3. Empty road and camera failure must lead to different phase decisions and status text (Tasks 1 and 3).
+4. Group priority must preserve minimum/clearance intervals and zero conflicting greens (Task 3).
+5. Parameter replay must reuse cached detections and change decisions/statistics without rewriting fixture data (Task 4).
 
 ## File map
 
-- `pyproject.toml`, `src/smart_crossing/types.py`: dependencies, immutable frame/event/configuration contracts.
-- `src/smart_crossing/source.py`: `FrameSource` and prepared-video implementation; the only frame-input boundary.
-- `src/smart_crossing/vision.py`: person/vehicle tracking for one source at a time.
-- `src/smart_crossing/events.py`: zones, unique counts, pedestrian requests, flow windows and video quality.
-- `src/smart_crossing/controller.py`: adaptive phase state machine and fallback.
-- `src/smart_crossing/pipeline.py`, `src/smart_crossing/preview.py`: early end-to-end runner and immediately visible HTML result.
-- `src/smart_crossing/baseline.py`, `src/smart_crossing/evaluation.py`, `src/smart_crossing/report.py`: fixed cycle, policy metrics and recommendations.
-- `src/smart_crossing/storage.py`, `src/smart_crossing/web.py`, `templates/`, `static/`: upload, bundled examples, replay, overlays, timeline and statistics.
-- `tests/`: focused safety/unit/HTTP checks. `docs/camera-layout.md` and `docs/demo-runbook.md`: equipment concept and judged demonstration.
+- `pyproject.toml`, `src/smart_crossing/types.py`, `provider.py`: package setup, validated detection contract, four fixture providers.
+- `src/smart_crossing/events.py`, `controller.py`, `pipeline.py`: genuine causal event and phase logic.
+- `src/smart_crossing/baseline.py`, `evaluation.py`, `report.py`: fixed cycle, comparable episode metrics and recommendations.
+- `src/smart_crossing/storage.py`, `web.py`, `templates/operator.html`, `static/operator.css`, `static/operator.js`: one local operator screen and persisted reports.
+- `tests/`: contract, scenario, safety, comparison and HTTP tests. `docs/interfaces/detection-provider-v1.md`, `docs/camera-layout.md`, `docs/demo-runbook.md`: integration and demo evidence.
 
-## Task 0: Candidate footage, camera layout and Linux target (about 1 hour)
+## Task 0: Camera layout and Linux preflight, parallel to core work (about 1 hour)
 
-Candidate Pexels clips already exist under ignored `demo_assets/videos/`; the 55-second crossing and 21-second group clips are the first candidates. This task does not certify their CV quality.
+- [ ] **Step 1: Create `docs/camera-layout.md`** with two cameras on existing supports: waiting/crossing coverage and vehicle approach/count-line coverage, fields of view, occlusions, night limitations and the missing observations when either view fails. Keep the proposed real installation distinct from the simulated demo workspace.
+- [ ] **Step 2: Choose an available Linux container, VM or host** and record how Task 6 will launch the app there. If none exists, prepare one before claiming completion. This preflight does not block Task 1's local browser work.
 
-- [ ] **Step 1: Select a Linux test environment now** (container, VM or accessible Linux host) and record the exact run command in `docs/demo-runbook.md`. If none is available, provision one before the final gate; a macOS-only run cannot complete this plan.
-- [ ] **Step 2: Create `docs/camera-layout.md` now**, not at the end. Show two cameras on existing standard supports: one covers both waiting zones and the crossing, the other covers vehicle approaches and the count line. Mark fields of view, mounting assumptions, occluded areas, night/lighting limits and which observations become invalid if either camera fails. The single wide-angle MVP clip is explicitly a demo approximation of that coverage.
-- [ ] **Step 3: Quickly inspect the two candidate clips** and record approximate waiting/approach/crossing zones and count-line endpoints in `demo_assets/README.md`. Preserve source links, authors and license notes. Do detailed hand labeling during Tasks 2–3; replace a clip if the detector cannot support its intended scenario.
+### Task 1: First browser vertical slice with real core logic (about 5 hours)
 
-### Task 1: Minimal video-to-visible-result slice (about 5 hours)
+**Files:** Create `pyproject.toml`, `src/smart_crossing/__init__.py`, `types.py`, `provider.py`, `events.py`, `controller.py`, `pipeline.py`, `web.py`, `templates/operator.html`, `static/operator.css`, `static/operator.js`, `docs/interfaces/detection-provider-v1.md`, `tests/test_vertical_slice.py`.
 
-**Files:** Create `pyproject.toml`, `src/smart_crossing/__init__.py`, `types.py`, `source.py`, `vision.py`, `events.py`, `controller.py`, `pipeline.py`, `preview.py`, and `tests/test_vertical_slice.py`. The first implementations are deliberately narrow and are strengthened in Tasks 2–4.
+**Interfaces:** `FixtureDetectionProvider(scenario_id: str).iter_detections() -> Iterator[FrameDetections]`; `ScenarioSpec(id: str, zones: Zones)` pairs a scenario with normalized geometry. `EventAggregator(zones: Zones, config: Config).add(frame: FrameDetections) -> list[SecondObservation]`; `Controller(config: Config).tick(obs: SecondObservation) -> PhaseDecision`; `analyze(provider: DetectionProvider, zones: Zones, config: Config) -> AnalysisReport`; `GET /` serves the operator screen and `GET /api/scenarios/{id}` returns the report. `Config` fields/defaults: `min_car_green_s=15`, `low_flow_per_min=6`, `low_flow_delay_s=5`, `max_wait_single_s=45`, `max_wait_group_s=30`, `group_threshold=5`, `car_warning_s=3`, `all_red_s=2`, `ped_green_s=12`, `fallback_car_green_s=30`, `flow_window_s=30`, `empty_gap_s=5`. `AnalysisReport` carries `frames`, `observations`, `decisions`, `stats`, `config`, `source_label`, `recommendations` (initially empty) and `comparison` (initially absent), with timestamps aligned for browser playback.
 
-**Interfaces:** `FrameSource.frames() -> Iterator[FrameSample]` and `.info() -> VideoInfo`; `PreparedVideoSource(path: Path)` is the only implementation. `FrameSample(t_s: float, image: np.ndarray, healthy: bool)`. `Detector.detect(frame: FrameSample) -> FrameDetections`; `EventAggregator.add(detections: FrameDetections) -> list[SecondObservation]`; `Controller.tick(observation: SecondObservation) -> PhaseDecision`; `run(source: FrameSource, detector: Detector, zones: Zones, config: Config) -> AnalysisReport`. The first report contains detections, second observations, decisions and a source label. `TrackedObject` may carry optional `vehicle_subtype`; `SecondObservation` may carry optional `priority_input`, ignored by this MVP controller.
+- [ ] **Step 1: Write failing tests** `test_fixture_to_visible_signal` (normal fixture produces a waiting request, a phase change and an HTML/JSON result with matching timestamp), `test_empty_road_is_not_failure` (empty-road reason appears only while healthy), and `test_unsupported_detection_is_rejected` (bad box/type/timestamp fails validation).
+- [ ] **Step 2: Run** `python -m pytest tests/test_vertical_slice.py -q`; expected: fail.
+- [ ] **Step 3: Implement one real causal path** from fixture boxes through zone/line events, flow window, pedestrian request and state machine to the browser. Start with the normal and empty-road fixtures. Draw a simple SVG crossing with virtual car/ped lights, bounding boxes, current mode, counts and decision reason; a scenario selector changes backend report and visible state. These are working rules, not prewritten phase timelines.
+- [ ] **Step 4: Run tests and open `http://localhost:8000`**; expected: both fixtures play through real decisions on one browser screen. The source badge says “демонстрационный сценарий”.
+- [ ] **Step 5: Commit** as `feat: show fixture-driven crossing vertical slice`.
 
-- [ ] **Step 1: Write a failing integration test** `test_video_to_detection_to_event_to_phase_to_visible_result`: use a tiny generated video and fake detector, assert at least one detected person becomes a request, the controller emits a phase decision, and `preview.html` displays its timestamp and reason. Also assert `run` consumes frames in increasing timestamp order.
-- [ ] **Step 2: Run** `python -m pytest tests/test_vertical_slice.py -q`; expected: fail because the pipeline is absent.
-- [ ] **Step 3: Implement the smallest working path**: OpenCV prepared-file reader; cache `yolo26n.pt` before the first real run and use its tracking adapter unless the colleagues' module is ready behind `Detector`; one configured waiting zone and vehicle count line; basic request/phase rule; `preview.py` writes a simple local HTML page containing a representative annotated frame, counts and phase timeline. Keep the controller's interface independent of file paths and model classes.
-- [ ] **Step 4: Run the integration test and a real candidate clip** through `python -m smart_crossing.preview <clip-path>`. Expected: the HTML page opens locally and shows actual detections, an event, a phase and its reason. If the clip lacks a detectable event, mark it unsuitable and replace it; do not hard-code detections.
-- [ ] **Step 5: Commit** the thin slice as `feat: show first video-to-phase result`.
+**Deliverable after Task 1:** a locally running browser screen, two distinct scenarios, real events and controller decisions, virtual signals, counts and reason text.
 
-**Gate:** By the end of Task 1 there is already a visible end-to-end demonstration. Later tasks improve correctness and presentation rather than creating the first working result.
+### Task 2: Complete the interactive operator screen and four scenarios (about 4 hours)
 
-### Task 2: Harden the prepared-video source and CV boundary (about 3 hours)
+**Files:** Extend `provider.py`, `web.py`, `templates/operator.html`, `static/operator.css`, `static/operator.js`; create `tests/test_scenarios_ui.py`.
 
-**Files:** Modify `source.py`, `vision.py`, `types.py`; create `tests/test_source_vision.py`.
+**Interfaces:** Add deterministic `normal`, `group`, `empty`, `failure` scenarios, each yielding `FrameDetections` through the same provider. `POST /api/replay` accepts scenario ID and validated Config, reruns `analyze` through `CachedDetectionProvider` on the exact cached detections, and returns the new report. UI playback/scrubbing reads timestamps from the report; it never invents phase decisions client-side.
 
-**Interfaces:** `validate_video(path: Path) -> VideoInfo` raises `InvalidVideo` for unreadable, non-monotonic or >120-second files. `PreparedVideoSource` reports blank or exactly repeated frames lasting at least 3 seconds as unhealthy. `VisionEngine.reset()` or a fresh instance resets tracker state per video. Map person and normal vehicle classes into one tracked-object contract; preserve optional subtype metadata without emergency-priority behavior.
+- [ ] **Step 1: Write failing tests** that normal has moving vehicle boxes and one waiting person; group has at least five simultaneous waiting IDs and a group-priority reason; empty has no vehicles and earlier pedestrian service; failure emits `healthy=False` and fallback, not empty-road acceleration. Replay must change at least one phase time while fixture frames remain byte-for-byte equal.
+- [ ] **Step 2: Run** `python -m pytest tests/test_scenarios_ui.py -q`; expected: fail.
+- [ ] **Step 3: Finish the one-screen UI** with simulation workspace, zones, boxes, paired signal heads, current mode, car count, measured flow intensity (vehicles/min) and visible occupancy as the density proxy, waiting count/time, reason, full-width phase timeline, flow chart, source/safety status and scenario selector. Add play/pause/scrub, responsive layout, keyboard focus and reduced-motion behavior. Use data-driven SVG overlays; no decorative card grid.
+- [ ] **Step 4: Run tests and Playwright CLI smoke flows** using the bundled wrapper after `command -v npx` succeeds: switch all four scenarios, replay a parameter, snapshot the page and capture desktop/narrow screenshots under `output/playwright/`. Correct any misleading phase/safety rendering.
+- [ ] **Step 5: Commit** as `feat: complete interactive ITS operator screen`.
 
-- [ ] **Step 1: Write failing tests** for corrupt/121-second files, monotonic frame timestamps, 3-second blank/frozen segments, and two consecutive videos with no shared track IDs. Test that a subtype alone leaves `priority_input` unset.
-- [ ] **Step 2: Run** `python -m pytest tests/test_source_vision.py -q`; expected: fail.
-- [ ] **Step 3: Implement validation and per-source tracking reset**. Keep raw footage local and cache model weights before the offline demo.
-- [ ] **Step 4: Run tests and smoke-test selected real frames**; record model detections and clip suitability in `demo_assets/README.md`.
-- [ ] **Step 5: Commit** as `feat: validate prepared video and tracking`.
+**Deliverable after Task 2:** all four scenarios drive real changing detections, events, phases and UI; the operator can play, scrub, switch scenarios and replay parameters. Basic statistics and safety state are visible. Baseline comparison and final recommendation rules follow in Task 4.
 
-### Task 3: Count events and compare traffic windows (about 3 hours)
+### Task 3: Harden aggregation, safety and fallback (about 3 hours)
 
-**Files:** Modify `events.py`, `types.py`; create `tests/test_events.py`.
+**Files:** Modify `events.py`, `controller.py`, `types.py`; create `tests/test_events_controller.py`.
 
-**Interfaces:** `SecondObservation` includes video second, unique vehicle arrivals, visible vehicles, stable waiting track IDs, group size, `video_ok`, rolling `flow_per_min`, `road_empty_5s` and warm-up status. `EventAggregator(zones: Zones, window_s: int).add(frame: FrameDetections) -> list[SecondObservation]` counts a vehicle once on the line and a waiting person only after 2 seconds. Support `window_s` 15, 30 or 45 without using future frames.
+**Interfaces:** Per-second observations include unique arrivals, visible vehicles, stable waiting IDs after 2 seconds, group size, rolling flow, healthy empty-road flag and warm-up status. The controller uses `CAR_GREEN → CAR_WARNING → ALL_RED_TO_PED → PED_GREEN → ALL_RED_TO_CAR`; served IDs cannot request again until they exit. Unhealthy input enters the fixed fallback program after mandatory phase time.
 
-- [ ] **Step 1: Write failing tests** for one crossing over many frames counted once, five waiting people after 2 seconds, a vehicle at 31 s not affecting the 30-s estimate, correct warm-up denominator, and invalid video never becoming `road_empty_5s=True`.
-- [ ] **Step 2: Run** `python -m pytest tests/test_events.py -q`; expected: fail.
-- [ ] **Step 3: Implement** bounded arrival buckets, normalized zones and line crossing; record manually checked timestamps for at least two cars and one pedestrian request in each chosen demo clip.
-- [ ] **Step 4: Run tests and compare 15/30/45-second event traces** on the same selected clips; save raw observations for Task 5.
-- [ ] **Step 5: Commit** as `feat: derive crossing events and traffic windows`.
+- [ ] **Step 1: Write failing tests** for one track counted once across frames, 2-second waiting stability, 30-second causal window and 5-second healthy empty road; group service by 30 s and single service by 45 s when feasible; 3-second warning, 2-second all-red, 12-second pedestrian green; no conflicting greens; failure at 10 s selects fallback.
+- [ ] **Step 2: Run** `python -m pytest tests/test_events_controller.py -q`; expected: fail.
+- [ ] **Step 3: Implement the missing correctness rules** in the same core modules used by fixtures and future CV; keep priority input inert in MVP.
+- [ ] **Step 4: Run tests and replay all four browser scenarios**; expected: visible phases, reasons and health agree with the strengthened rules.
+- [ ] **Step 5: Commit** as `feat: enforce crossing event and signal safety`.
 
-### Task 4: Enforce phase safety and fallback (about 3 hours)
+### Task 4: Statistics, fixed baseline and recommendation (about 3 hours)
 
-**Files:** Modify `controller.py`, `types.py`; create `tests/test_controller.py`.
+**Files:** Create `baseline.py`, `evaluation.py`, `report.py`, `tests/test_evaluation.py`; modify `pipeline.py`, `web.py`, `templates/operator.html`, `static/operator.js`.
 
-**Interfaces:** `Phase` states: `CAR_GREEN`, `CAR_WARNING`, `ALL_RED_TO_PED`, `PED_GREEN`, `ALL_RED_TO_CAR`. `Controller(config: Config).tick(obs: SecondObservation) -> PhaseDecision` starts at car green at `t=0`, remembers served track IDs until they exit, and records the reason for each transition. On bad video it completes required phase time and follows the fixed fallback cycle; it never interprets source failure as an empty road.
+**Interfaces:** `FixedCycleController(config: Config)` runs the same start state with car green 30 s, warning 3 s, all-red 2 s, pedestrian green 12 s and return all-red 2 s. `evaluate(observations, decisions) -> PolicyMetrics` returns pedestrian mean/max wait, conditional vehicle delay, phase switches and safety-violation count. Conditional vehicle delay sums time until the next virtual car green for observed arrivals during non-car-green; if a known phase extends beyond fixture end, extend that phase timer without assuming new arrivals. It assumes arrivals are unchanged and is not a real capacity measurement. Safety violations count conflicting greens, illegal phase order, skipped warning/all-red and shortened minimum phases. Run adaptive 15/30/45-second windows on the same fixture detections; reject any option with a safety violation and explain the 30-second default or chosen alternative.
 
-- [ ] **Step 1: Write failing tests**: empty road request at 0 s reaches pedestrian green at 20 s; group reaches it by 30 s and single request by 45 s when feasible; warning lasts 3 s and all-red 2 s; no conflicting green; already served ID cannot re-request; failure at 10 s selects fallback rather than empty-road acceleration.
-- [ ] **Step 2: Run** `python -m pytest tests/test_controller.py -q`; expected: fail.
-- [ ] **Step 3: Implement** min-car-green, low/high-flow deferral, group priority, wait deadlines and deterministic fallback. Protect mandatory clearance and pedestrian green from CV-driven shortening.
-- [ ] **Step 4: Run** the controller tests and the Task 1 vertical-slice test; expected: all pass and the visible timeline reflects the safer policy.
-- [ ] **Step 5: Commit** as `feat: enforce safe adaptive phase rules`.
-
-### Task 5: Fixed-cycle baseline, window metrics and recommendations (about 3 hours)
-
-**Files:** Create `baseline.py`, `evaluation.py`, `report.py`, `tests/test_evaluation.py`; modify `pipeline.py`, `types.py`.
-
-**Interfaces:** `FixedCycleController(config: Config).tick(obs: SecondObservation) -> PhaseDecision` repeats car green 30 s → warning 3 s → all-red 2 s → pedestrian green 12 s → all-red 2 s from the same `t=0`. `PolicyMetrics(mean_ped_wait_s: float, max_ped_wait_s: float, conditional_vehicle_delay_s: float, switches: int, safety_violations: int)`. `evaluate(trace: tuple[SecondObservation, ...], decisions: tuple[PhaseDecision, ...]) -> PolicyMetrics`. Conditional vehicle delay is the sum, for observed vehicle arrivals during simulated non-car-green, of seconds until the next simulated car green. If a phase crosses the video end, extend only its known timer to determine release; assume no new arrivals. This estimate assumes arrivals do not change with the policy and does not model queues or real capacity. Safety violations count conflicting greens, illegal phase order, missed warning/all-red durations and shortened minimum green. `compare_windows(detections: tuple[FrameDetections, ...], zones: Zones, config: Config, windows: tuple[int, ...] = (15, 30, 45)) -> ComparisonReport` re-aggregates causal windows and runs adaptive and fixed-cycle policies on identical observed arrivals/requests.
-
-- [ ] **Step 1: Write failing tests** that the fixed cycle follows exact phases, both policies use identical observed requests/arrivals, the metric formula gives a known result on a tiny trace, every compared policy has zero safety violations, and report wording says “модельная оценка для эпизода”, never “измеренное улучшение пропускной способности”.
+- [ ] **Step 1: Write failing tests** for exact fixed-cycle phases, equal input arrivals/requests across policies, known metric totals, zero safety violations, window comparison on identical detections, and report text saying “модельная оценка для эпизода”.
 - [ ] **Step 2: Run** `python -m pytest tests/test_evaluation.py -q`; expected: fail.
-- [ ] **Step 3: Implement** baseline and evaluation, then calculate a 15/30/45 table with pedestrian wait, conditional vehicle delay, switches and safety violations. Keep 30 s as default unless the observed trade-off supports another window; explain the choice, and reject any candidate with a safety violation. Generate 1–2 recommendations tied to timestamps and metrics.
-- [ ] **Step 4: Run tests and the vertical slice**; expected: comparison table and recommendation appear in the visible result.
-- [ ] **Step 5: Commit** as `feat: compare adaptive and fixed signal policies`.
+- [ ] **Step 3: Implement real statistics and 1–2 evidence-linked recommendation rules**, then add fixed/adaptive comparison and 15/30/45 metrics to the existing screen. Preserve the displayed source label and explain the assumptions beside comparisons.
+- [ ] **Step 4: Run tests and inspect the browser**; expected: changing scenario or configuration changes relevant metrics/recommendations, while raw fixture counts remain fixed under parameter replay.
+- [ ] **Step 5: Commit** as `feat: compare crossing policies and explain recommendations`.
 
-### Task 6: Product interface and persistence (about 3 hours)
+### Task 5: Persistence and CV handoff without CV work (about 2 hours)
 
-**Files:** Create `storage.py`, `web.py`, `templates/index.html`, `templates/result.html`, `static/app.js`, `static/style.css`, `tests/test_web.py`; keep `preview.py` as the fast diagnostic path.
+**Files:** Create `storage.py`, `tests/test_storage.py`; update `docs/interfaces/detection-provider-v1.md`, `web.py`, `README.md`.
 
-**Interfaces:** `POST /analyze` accepts uploaded video plus prepared zone profile/config; the home page also selects packaged examples through the same `run` pipeline. `GET /reports/{id}`, `/reports/{id}/data`, `/reports/{id}/video` show the result, structured evidence and local playback; `POST /reports/{id}/replay` changes policy parameters without rerunning CV. `ReportStore` persists report JSON and configuration in SQLite.
+**Interfaces:** `ReportStore.save(report: AnalysisReport) -> str` and `.load(report_id: str) -> AnalysisReport` persist reports/configuration in SQLite. The contract document defines how the future `CVDetectionAdapter` must map timestamps, health, stable IDs, `person`/`vehicle`, normalized boxes and confidence. Optional subtype/priority input are documented but do not affect the controller.
 
-- [ ] **Step 1: Write failing HTTP tests** for corrupt upload rejection, bundled example and normal upload using the same pipeline, visible phase timeline/reasons/metrics/model-label, local video route, and parameter replay preserving raw counts.
-- [ ] **Step 2: Run** `python -m pytest tests/test_web.py -q`; expected: fail.
-- [ ] **Step 3: Implement** upload/configuration, virtual signal and video overlay, flow/window comparison, baseline comparison, statistics, quality markers and source attribution. Prefer a clear single result page over extra navigation or authentication.
-- [ ] **Step 4: Run tests and open both example and upload flows locally**; expected: results agree with the Task 1 preview and Task 5 metrics.
-- [ ] **Step 5: Commit** as `feat: present analyzed crossing episodes`.
+- [ ] **Step 1: Write failing tests** for report round-trip, scenario switch creating a distinct report, and replay loading cached detections without invoking a provider again.
+- [ ] **Step 2: Run** `python -m pytest tests/test_storage.py -q`; expected: fail.
+- [ ] **Step 3: Implement SQLite storage and the adapter handoff document**. Do not write the real adapter until the other team's schema is available.
+- [ ] **Step 4: Run storage and HTTP tests**; expected: reports and parameter replay survive app restart.
+- [ ] **Step 5: Commit** as `feat: persist reports and define CV handoff`.
 
-### Task 7: Camera-layout review, Linux run and demo rehearsal (about 2 hours)
+### Task 6: Browser QA, Linux run and demo rehearsal (about 2 hours)
 
-**Files:** Update `docs/camera-layout.md`, `demo_assets/README.md`; create `docs/demo-runbook.md`, `README.md`.
+**Files:** Update `docs/camera-layout.md`; create `docs/demo-runbook.md`; update `README.md` only for verified launch instructions.
 
-**Interfaces:** No new runtime API. The camera note links every input zone to a physical camera and support, documents count line, occlusions, night limitations and one-camera-loss behavior. The runbook records prepared clip paths, expected timestamps, attribution, Linux command and actual outputs.
+**Interfaces:** No runtime API. The camera note assigns waiting/crossing view and vehicle approach/count line to cameras on existing supports, including occlusion, night and one-camera-failure limits. It explains that the current simulation is a sensor substitute, not an installed camera system.
 
-- [ ] **Step 1: Run the full test suite** with `python -m pytest -q`, then run a selected prepared clip through the complete app inside the Linux environment selected in Task 0. Record OS/runtime, command, exit status, processing time and a result screenshot or report ID. **Do not mark MVP complete if this Linux run has not succeeded.**
-- [ ] **Step 2: Recheck camera layout against the actual selected clip** and keep the physical two-camera proposal distinct from the one-camera demo view. Confirm the loss of either required view routes to fallback.
-- [ ] **Step 3: Rehearse bundled example, upload and labeled fault clip** offline; verify detection → event → controller → visible result, 15/30/45 table, fixed baseline, zero safety violations and honest model language. Repair only failures that block this chain.
-- [ ] **Step 4: Commit** the runbook, layout update and verified fixes as `docs: verify crossing MVP on Linux`.
+- [ ] **Step 1: Run `python -m pytest -q` and all four scenarios in Playwright CLI**: switch scenarios, verify normal/group/empty/failure phase and safety states, change a parameter and verify replay, inspect timeline, flow chart, comparison and recommendation. Capture screenshots and fix concrete UI discrepancies.
+- [ ] **Step 2: Run the complete app in an available Linux environment**, record OS, command and successful scenario replay in `docs/demo-runbook.md`; do not mark complete without this. Do not infer embedded-PC performance.
+- [ ] **Step 3: Finalize camera layout and rehearse the operator story**: request → traffic window → safe decision → phase → modeled comparison → recommendation; show camera-failure fallback. Record only observed results.
+- [ ] **Step 4: Commit** verified docs and fixes as `docs: verify operator prototype demo`.
 
-## 24-hour cut line
+## Order, parallel work and cut line
 
-Task 0 and Task 1 establish the first visible end-to-end result early. Tasks 2–5 make the evidence and controller credible; Task 6 replaces the diagnostic page with the judged product UI; Task 7 is a mandatory Linux/demo gate. The estimates total about 23 hours, leaving roughly one hour of contingency. If a candidate clip fails CV validation, replace it promptly and keep the failed result documented; never substitute synthetic detections while claiming the footage was analyzed. Live camera/RTSP and emergency-vehicle priority stay out of the MVP.
+Tasks 1 and 2 are the critical path to the first polished interactive browser prototype (about 9 hours). After Task 1 freezes the detection/report interfaces, a frontend subagent may own Task 2 (`templates/`, `static/`, `web.py`) while another owns Task 3 (`events.py`, `controller.py`, safety tests). Task 0 can run independently from the start. A third subagent can build Task 4's backend only (`baseline.py`, `evaluation.py`, `report.py`, tests) alongside Task 2; defer Task 4's `web.py`/template integration until the frontend work is merged and Task 3 safety behavior is verified. Task 5 follows the report shape; Task 6 follows the UI and engine. Keep file ownership separate and integrate in order. Total planned effort is about 20 hours, leaving roughly four hours within the 24-hour hackathon for integration and fixes.
+
+**Completion boundary:** This plan delivers a complete interactive prototype of the non-CV system. It does not claim the original case's computer-vision requirement is complete. When the team's CV sample schema arrives, implement one `CVDetectionAdapter`, run the same scenario and safety tests against its output, then validate on real video as a separate integration task.
