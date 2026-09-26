@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver a polished local operator console that demonstrates real event aggregation, adaptive signal control, safety fallback, statistics, model comparison, and parameter replay using deterministic detection fixtures.
+**Goal:** Deliver a polished browser operator console that demonstrates real event aggregation, adaptive signal control, safety fallback, statistics, model comparison, and parameter replay using deterministic detection fixtures.
 
 **Architecture:** `DetectionProvider` yields timestamped `FrameDetections`. The same event aggregator, rolling window, decision engine, phase machine, statistics and frontend consume fixtures now and a CV adapter later. Only the provider changes when the separate video team delivers its module. The browser shows a simulation workspace for fixture data and can later overlay the same normalized boxes on real video.
 
@@ -18,7 +18,7 @@
 - Scenario-derived results are visibly labeled **демонстрационный сценарий**. Baseline differences are **модельная оценка для эпизода**, not measured road-capacity gains.
 - Emergency-vehicle recognition is out of scope. Optional `vehicle_subtype` and `priority_input` are reserved in the contract; visual subtype alone never changes a phase.
 - A future CV adapter must only implement `DetectionProvider`; it must not force changes to events, decision logic, statistics or frontend data shapes.
-- The app must run locally in a browser. A complete run in an available Linux environment is mandatory before declaring this prototype complete; embedded-PC performance remains untested.
+- The app must run in a browser via a web server. Browser flows are the required verification target. This prototype makes no claim about Linux or embedded-PC execution or performance.
 
 ## Stable CV boundary
 
@@ -75,10 +75,10 @@ Compared with a grid of equal KPI cards, this layout gives the crossing and phas
 - `src/smart_crossing/storage.py`, `web.py`, `templates/operator.html`, `static/operator.css`, `static/operator.js`: one local operator screen and persisted reports.
 - `tests/`: contract, scenario, safety, comparison and HTTP tests. `docs/interfaces/detection-provider-v1.md`, `docs/camera-layout.md`, `docs/demo-runbook.md`: integration and demo evidence.
 
-## Task 0: Camera layout and Linux preflight, parallel to core work (about 1 hour)
+## Task 0: Camera layout and web launch setup, parallel to core work (about 1 hour)
 
 - [ ] **Step 1: Create `docs/camera-layout.md`** with two cameras on existing supports: waiting/crossing coverage and vehicle approach/count-line coverage, fields of view, occlusions, night limitations and the missing observations when either view fails. Keep the proposed real installation distinct from the simulated demo workspace.
-- [ ] **Step 2: Choose an available Linux container, VM or host** and record how Task 6 will launch the app there. If none exists, prepare one before claiming completion. This preflight does not block Task 1's local browser work.
+- [ ] **Step 2: Record the browser launch command and demo URL** for the web server. This setup does not block Task 1's first vertical slice.
 
 ### Task 1: First browser vertical slice with real core logic (about 5 hours)
 
@@ -144,14 +144,14 @@ Compared with a grid of equal KPI cards, this layout gives the crossing and phas
 - [ ] **Step 4: Run storage and HTTP tests**; expected: reports and parameter replay survive app restart.
 - [ ] **Step 5: Commit** as `feat: persist reports and define CV handoff`.
 
-### Task 6: Browser QA, Linux run and demo rehearsal (about 2 hours)
+### Task 6: Browser QA and demo rehearsal (about 2 hours)
 
 **Files:** Update `docs/camera-layout.md`; create `docs/demo-runbook.md`; update `README.md` only for verified launch instructions.
 
 **Interfaces:** No runtime API. The camera note assigns waiting/crossing view and vehicle approach/count line to cameras on existing supports, including occlusion, night and one-camera-failure limits. It explains that the current simulation is a sensor substitute, not an installed camera system.
 
 - [ ] **Step 1: Run `python -m pytest -q` and all four scenarios in Playwright CLI**: switch scenarios, verify normal/group/empty/failure phase and safety states, change a parameter and verify replay, inspect timeline, flow chart, comparison and recommendation. Capture screenshots and fix concrete UI discrepancies.
-- [ ] **Step 2: Run the complete app in an available Linux environment**, record OS, command and successful scenario replay in `docs/demo-runbook.md`; do not mark complete without this. Do not infer embedded-PC performance.
+- [ ] **Step 2: Launch the complete app through the documented web-server command** and record the browser URL plus successful scenario replay in `docs/demo-runbook.md`. Do not infer Linux or embedded-PC performance.
 - [ ] **Step 3: Finalize camera layout and rehearse the operator story**: request → traffic window → safe decision → phase → modeled comparison → recommendation; show camera-failure fallback. Record only observed results.
 - [ ] **Step 4: Commit** verified docs and fixes as `docs: verify operator prototype demo`.
 
