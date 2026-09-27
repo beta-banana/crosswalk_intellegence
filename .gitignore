@@ -1,3 +1,22 @@
-# Downloaded footage is retained locally; only validated, optimized demo copies
-# will be added to the application during implementation.
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node and frontend build output
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+# Local environment and editor files
+.env
+.DS_Store
+.idea/
+.vscode/
+
+# Large source/demo media (optimized browser demo is tracked separately)
 demo_assets/videos/
+result_crosswalk.mp4
+Кейс СмартСи.docx

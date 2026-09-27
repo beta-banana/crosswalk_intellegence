@@ -1,0 +1,1556 @@
+{
+  "seconds": [
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 3,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 2,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 1,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 1,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 2,
+      "new_pedestrians": 2,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 1,
+      "waiting": 2,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 2,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 2,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 2,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 2,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 1,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 1,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 1,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 3,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 7,
+      "new_pedestrians": 4,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 7,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 7,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 11,
+      "new_pedestrians": 4,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 11,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 11,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 16,
+      "new_pedestrians": 5,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 16,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 16,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 21,
+      "new_pedestrians": 5,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 21,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 18,
+      "new_pedestrians": 0,
+      "on_road": 3
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 18,
+      "new_pedestrians": 4,
+      "on_road": 7
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 14,
+      "new_pedestrians": 0,
+      "on_road": 11
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 0,
+      "on_road": 16
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 15,
+      "new_pedestrians": 6,
+      "on_road": 16
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 0,
+      "on_road": 21
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 0,
+      "on_road": 21
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 4,
+      "on_road": 25
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 0,
+      "on_road": 25
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 31
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 5,
+      "on_road": 31
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 0,
+      "on_road": 31
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 5,
+      "new_pedestrians": 0,
+      "on_road": 35
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 4,
+      "on_road": 35
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 37
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 33
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 6,
+      "on_road": 29
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 6,
+      "new_pedestrians": 0,
+      "on_road": 33
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 6,
+      "new_pedestrians": 0,
+      "on_road": 28
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 10,
+      "new_pedestrians": 4,
+      "on_road": 28
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 29
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 29
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 5,
+      "on_road": 25
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 5,
+      "new_pedestrians": 0,
+      "on_road": 29
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 5,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 9,
+      "new_pedestrians": 4,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 28
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 24
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 8,
+      "new_pedestrians": 4,
+      "on_road": 24
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 23
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 17
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 17
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 13
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 13
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 12
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 11
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 10
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 3,
+      "on_road": 9
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 0,
+      "on_road": 8
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 0,
+      "on_road": 8
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 3,
+      "new_pedestrians": 0,
+      "on_road": 7
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 7
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 4,
+      "on_road": 6
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 6
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 5
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 4
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 4
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 3
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 2
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 2
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 4,
+      "on_road": 3
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 3
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 4
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 4,
+      "new_pedestrians": 0,
+      "on_road": 4
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 3
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 2
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 2
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 0,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 1
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 2,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 1,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 2,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 0,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 4,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    },
+    {
+      "camera_ok": true,
+      "vehicles": 3,
+      "new_vehicles": 1,
+      "waiting": 0,
+      "new_pedestrians": 0,
+      "on_road": 0
+    }
+  ]
+}
