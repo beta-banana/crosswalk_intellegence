@@ -30,12 +30,12 @@ class PhasePlan(BaseModel):
 class Config(BaseModel):
     control_mode: Literal["adaptive", "manual"] = "adaptive"
     phase_plan: PhasePlan = Field(default_factory=PhasePlan)
-    min_vehicle_green: int = Field(15, ge=5, le=40)
-    low_flow_threshold: int = Field(6, ge=0, le=30)
+    min_vehicle_green: int = Field(10, ge=5, le=40)
+    low_flow_threshold: int = Field(24, ge=0, le=30)
     group_threshold: int = Field(5, ge=2, le=10)
-    max_single_wait: int = Field(45, ge=20, le=90)
-    max_group_wait: int = Field(30, ge=15, le=60)
-    pedestrian_green: int = Field(12, ge=8, le=30)
+    max_single_wait: int = Field(20, ge=20, le=90)
+    max_group_wait: int = Field(15, ge=15, le=60)
+    pedestrian_green: int = Field(8, ge=8, le=30)
 
 
 @dataclass(frozen=True)
@@ -66,7 +66,8 @@ SCENARIO_DATA = (
 )
 
 SCENARIOS = [
-    {"id": s.id, "name": s.name, "description": s.description, "duration": s.duration, "tone": s.tone}
+    {"id": s.id, "name": s.name, "description": s.description, "duration": s.duration,
+     "tone": s.tone, "kind": "simulation"}
     for s in SCENARIO_DATA
 ]
 SCENARIOS_BY_ID = {s.id: s for s in SCENARIO_DATA}
@@ -119,6 +120,18 @@ def _safety_violations(frames: list[dict]) -> int:
         if length < minimums.get(phase, 0):
             violations += 1
     return violations
+
+
+def _phase_metrics(frames: list[dict]) -> dict:
+    """Return transparent timing metrics without pretending to model vehicle delay."""
+    total_seconds = len(frames)
+    vehicle_green_seconds = sum(frame["phase"] == "vehicle_green" for frame in frames)
+    return {
+        "vehicle_green_seconds": vehicle_green_seconds,
+        "vehicle_closed_seconds": total_seconds - vehicle_green_seconds,
+        "vehicle_green_share": round(100 * vehicle_green_seconds / total_seconds, 1)
+        if total_seconds else None,
+    }
 
 
 def _phase_duration(phase: str, mode: str, config: Config) -> int:
@@ -181,10 +194,10 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
                         next_phase, next_reason = "warning", "Свободная дорога подтверждена за 5 секунд"
                     elif oldest_wait >= wait_limit - WARNING_SECONDS - ALL_RED_SECONDS:
                         next_phase, next_reason = "warning", "Приоритет группы: предел ожидания" if group else "Предел ожидания пешехода"
-                    elif flow <= config.low_flow_threshold and oldest_wait >= 5:
-                        next_phase, next_reason = "warning", "Низкая интенсивность потока за предыдущие 30 секунд"
                     elif group and oldest_wait >= 8:
                         next_phase, next_reason = "warning", "Приоритет группы пешеходов"
+                    elif not group and flow <= config.low_flow_threshold and oldest_wait >= 5:
+                        next_phase, next_reason = "warning", "Низкая интенсивность потока за предыдущие 30 секунд"
             if not next_phase:
                 if mode == "fallback":
                     reason = "Камера недоступна: работает резервный цикл"
@@ -260,6 +273,7 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
         "unserved_requests": len(scenario.requests) - len(served),
         "camera_uptime": round(100 * sum(frame["healthy"] for frame in frames) / len(frames), 1),
         "safety_violations": _safety_violations(frames),
+        **_phase_metrics(frames),
     }
     return {"frames": frames, "events": events, "summary": summary}
 

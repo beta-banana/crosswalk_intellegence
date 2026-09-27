@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.simulation import Config, PhasePlan, SCENARIOS, simulate
+from app.video_episode import video_scenarios
 
 
 def test_scenarios_are_deterministic_and_keep_protective_phases():
@@ -26,7 +27,7 @@ def test_pedestrian_request_survives_the_end_of_its_observation_window():
 def test_empty_road_and_large_group_receive_early_green():
     empty = simulate("empty", Config())
     group = simulate("group", Config())
-    assert empty["summary"]["first_pedestrian_green"] == 20
+    assert empty["summary"]["first_pedestrian_green"] == 15
     assert group["summary"]["first_pedestrian_green"] == 21
     assert any("Приоритет группы" in event["text"] for event in group["events"])
     assert empty["summary"]["mean_wait"] < empty["baseline"]["mean_wait"]
@@ -43,7 +44,7 @@ def test_camera_outage_hides_observations_and_uses_fallback_cycle():
 
 def test_api_catalog_simulation_and_validation():
     client = TestClient(app)
-    assert len(client.get("/api/scenarios").json()) == 6
+    assert len(client.get("/api/scenarios").json()) == len(SCENARIOS) + len(video_scenarios())
     assert client.post("/api/simulate", json={"scenario_id": "group"}).json()["scenario_id"] == "group"
     assert client.post("/api/simulate", json={"scenario_id": "missing"}).status_code == 404
     assert client.post("/api/simulate", json={"config": {"pedestrian_green": 3}}).status_code == 422
@@ -70,3 +71,14 @@ def test_traffic_statistics_reflect_mock_observations():
     assert empty["mean_vehicles_in_zone"] == 0
     assert rush["mean_flow_per_min"] > empty["mean_flow_per_min"]
     assert rush["peak_vehicles_in_zone"] >= rush["mean_vehicles_in_zone"]
+
+
+def test_default_policy_improves_waiting_and_reports_vehicle_availability():
+    for scenario in SCENARIOS:
+        report = simulate(scenario["id"], Config())
+        summary = report["summary"]
+        assert report["modeled_wait_difference"] is not None
+        assert report["modeled_wait_difference"] > 0
+        assert summary["max_wait"] <= 20
+        assert summary["vehicle_green_seconds"] + summary["vehicle_closed_seconds"] == len(report["frames"])
+        assert 0 < summary["vehicle_green_share"] <= 100
