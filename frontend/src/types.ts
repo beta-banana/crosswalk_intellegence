@@ -1,4 +1,4 @@
-export type Page = 'dashboard' | 'analytics' | 'logic' | 'settings' | 'demo'
+export type Page = 'dashboard' | 'analytics' | 'logic' | 'settings'
 export type Phase = 'vehicle_green' | 'warning' | 'all_red_to_ped' | 'pedestrian_green' | 'all_red_to_vehicle'
 export type PhasePlan = Record<Phase, number>
 export type Scenario = { id: string; name: string; description: string; duration: number; tone: string }

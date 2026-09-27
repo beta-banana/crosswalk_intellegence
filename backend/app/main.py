@@ -10,7 +10,7 @@ from .simulation import Config, SCENARIOS, simulate
 from .video_episode import VIDEO_ID, VIDEO_PATH, simulate_video, video_scenario
 
 
-app = FastAPI(title="Smart Crossing Demo API", version="1.0.0")
+app = FastAPI(title="Smart Crossing Demo API", version="1.1.0")
 
 
 class SimulationRequest(BaseModel):

@@ -26,16 +26,16 @@ VIDEO_ID = "video"
 def load_observations() -> list[dict]:
     rows = json.loads(JSON_PATH.read_text(encoding="utf-8"))["seconds"]
     if not isinstance(rows, list) or not rows:
-        raise ValueError("CV JSON has no observations")
+        raise ValueError("Файл наблюдений компьютерного зрения не содержит данных")
     expected = {"camera_ok", "vehicles", "new_vehicles", "waiting", "new_pedestrians", "on_road"}
     for second, row in enumerate(rows):
         if not isinstance(row, dict) or set(row) != expected or type(row["camera_ok"]) is not bool:
-            raise ValueError(f"Invalid CV observation at second {second}")
+            raise ValueError(f"Некорректные данные компьютерного зрения на секунде {second}")
         values = (row[key] for key in expected - {"camera_ok"})
         if row["camera_ok"] and any(type(value) is not int or value < 0 for value in values):
-            raise ValueError(f"Invalid CV counters at second {second}")
+            raise ValueError(f"Некорректные счётчики компьютерного зрения на секунде {second}")
         if not row["camera_ok"] and any(value is not None for value in values):
-            raise ValueError(f"Unavailable CV counters must be null at second {second}")
+            raise ValueError(f"Недоступные счётчики должны быть пустыми на секунде {second}")
     return rows
 
 
@@ -43,7 +43,7 @@ def video_scenario() -> dict:
     return {
         "id": VIDEO_ID,
         "name": "Видео перехода",
-        "description": "Запись CV-модуля и посекундные наблюдения из JSON",
+        "description": "Запись модуля компьютерного зрения и посекундные данные наблюдений",
         "duration": len(load_observations()),
         "tone": "video",
     }
