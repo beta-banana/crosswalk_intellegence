@@ -13,3 +13,21 @@
 .sim-3d .sim-camera-fault{background:#1d3847aa;pointer-events:none}
 @media(max-width:740px){.sim-road.sim-3d{height:400px}}
 @media(max-width:430px){.sim-road.sim-3d{height:335px}.sim-3d .sim-map-hud>span:last-child{display:none}}
+
+.simulator .sim-layout{grid-template-columns:minmax(0,1fr)}
+@media(min-width:1131px){.simulator .sim-side-column{grid-template-columns:repeat(3,minmax(0,1fr))}.simulator .sim-road.sim-3d{height:560px}}
+@media(min-width:741px) and (max-width:1130px){.simulator .sim-side-column{grid-template-columns:260px minmax(0,1fr)}}
+@media(max-width:740px){.simulator .sim-side-column{grid-template-columns:minmax(0,1fr)}}
+.sim-view-controls{position:absolute;top:14px;right:15px;z-index:12;display:flex;gap:4px;padding:4px;background:#f4f7f2eb;border:1px solid #ffffffc9;border-radius:8px;box-shadow:0 2px 12px #1c34352a}
+.sim-view-controls button{border:0;border-radius:5px;background:transparent;color:#35565b;padding:7px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+.sim-view-controls button.active{background:#226f70;color:#fff;box-shadow:0 1px 4px #1d4a4a38}
+.sim-view-controls button:not(.active):hover{background:#dcebe6}
+.sim-camera-caption{position:absolute;right:15px;bottom:51px;z-index:11;padding:7px 10px;border-radius:5px;background:#182a32d9;color:#fff;font-size:11px;font-weight:600;pointer-events:none}
+.sim-camera-view .sim-webgl canvas{cursor:default}
+.sim-night .sim-view-controls{background:#213b4bea;border-color:#5a7983}
+.sim-night .sim-view-controls button{color:#e5f0ed}
+.sim-night .sim-view-controls button.active{background:#287f83}
+@media(max-width:430px){.sim-view-controls{top:48px;left:14px;right:14px;justify-content:space-between}.sim-view-controls button{flex:1;padding:7px 4px}.sim-camera-caption{right:14px;left:14px;text-align:center;font-size:10px}}
+.simulator .phase-vehicle_yellow{background:#edb768}.simulator .phase-all_red_to_pedestrian{background:#b1bdbb}.simulator .phase-pedestrian_walk{background:#5bb9a3}.simulator .phase-pedestrian_clearance{background:#68aabb}
+.sim-priority-details{padding:10px 16px 15px;color:#52747b;font-size:11px;line-height:1.5}
+.sim-preset-summary{margin-top:16px;background:#eff7f5;border-radius:7px;padding:14px;color:#486d6b;font-size:12px;line-height:1.5}.sim-preset-summary p{margin:0}.sim-preset-summary strong{color:#176d66}.sim-preset-summary button{margin-top:12px;border:1px solid #75bdb1;border-radius:6px;background:#fff;color:#176d66;padding:8px 11px;font-size:11px;font-weight:700;cursor:pointer}.sim-preset-summary button:hover{background:#dff1ec}

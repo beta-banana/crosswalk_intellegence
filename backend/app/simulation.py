@@ -9,7 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from .adaptive_control import AdaptivePriority, PHASE_ORDER, PhaseDriver, SimulatedController, TrackedObservation
 
 
 FLOW_WINDOW_SECONDS = 30
@@ -17,6 +19,7 @@ CLEAR_ROAD_SECONDS = 5
 WARNING_SECONDS = 3
 ALL_RED_SECONDS = 2
 FALLBACK_VEHICLE_SECONDS = 30
+DEMO_APPROACH_SPEED_KMH = 50  # nominal travel speed for synthetic segment occupancy
 
 
 class PhasePlan(BaseModel):
@@ -24,18 +27,21 @@ class PhasePlan(BaseModel):
     warning: int = Field(3, ge=3, le=10)
     all_red_to_ped: int = Field(2, ge=2, le=10)
     pedestrian_green: int = Field(12, ge=8, le=60)
+    pedestrian_clearance: int = Field(6, ge=3, le=60)
     all_red_to_vehicle: int = Field(2, ge=2, le=10)
 
 
 class Config(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     control_mode: Literal["adaptive", "manual"] = "adaptive"
     phase_plan: PhasePlan = Field(default_factory=PhasePlan)
     min_vehicle_green: int = Field(10, ge=5, le=40)
-    low_flow_threshold: int = Field(24, ge=0, le=30)
-    group_threshold: int = Field(5, ge=2, le=10)
-    max_single_wait: int = Field(20, ge=20, le=90)
-    max_group_wait: int = Field(15, ge=15, le=60)
     pedestrian_green: int = Field(8, ge=8, le=30)
+    pedestrian_clearance: int = Field(6, ge=3, le=60)
+    segment_length_km: float = Field(0.1, gt=0, le=2)
+    k_ref: float = Field(20, gt=0, le=500)
+    t_max_s: float = Field(90, gt=0, le=600)
+    density_window_s: float = Field(20, gt=0, le=120)
 
 
 
@@ -69,11 +75,22 @@ def _scheduled_arrivals(rate: float, duration: int) -> tuple[int, ...]:
     return tuple(arrivals)
 
 
+def _profiled_arrivals(*periods: tuple[int, float]) -> tuple[int, ...]:
+    """Join deterministic periods with different arrival rates."""
+    elapsed = 0
+    arrivals: list[int] = []
+    for duration, rate in periods:
+        arrivals.extend(elapsed + second for second in _scheduled_arrivals(rate, duration))
+        elapsed += duration
+    return tuple(arrivals)
+
+
 @dataclass(frozen=True)
 class Request:
     start: int
     end: int
     people: int
+    side: Literal["south", "north"] = "south"
 
 
 @dataclass(frozen=True)
@@ -89,11 +106,11 @@ class Scenario:
 
 
 SCENARIO_DATA = (
-    Scenario("normal", "Обычное движение", "Умеренный поток и одиночный запрос", 90, "normal", (4, 13, 29, 47, 56, 72, 83), (Request(10, 50, 1), Request(61, 88, 2))),
-    Scenario("rush", "Час пик", "Плотный поток, ожидание до безопасного окна", 110, "busy", tuple(range(2, 87, 3)), (Request(8, 60, 2),)),
-    Scenario("group", "Большая группа пешеходов", "Группа из 7 человек получает приоритет", 90, "group", (3, 6, 9, 12, 15, 18, 23, 30, 39, 51, 65, 77), (Request(8, 62, 7),)),
-    Scenario("empty", "Свободная дорога", "Свободная дорога и быстрый отклик", 70, "clear", (), (Request(3, 50, 1),)),
-    Scenario("failure", "Отказ камеры", "Потеря изображения и резервный цикл", 90, "fault", (4, 11, 19, 50, 62, 76), (Request(9, 62, 1),), (30, 75)),
+    Scenario("normal", "Обычное движение", "Умеренный поток, две группы у перехода", 90, "normal", _scheduled_arrivals(32, 90), (Request(10, 75, 2, "south"), Request(60, 91, 3, "north"))),
+    Scenario("rush", "Час пик", "Плотный поток с усилением в середине эпизода", 110, "busy", _profiled_arrivals((25, 90), (60, 115), (25, 90)), (Request(8, 109, 2, "south"), Request(45, 109, 3, "north"))),
+    Scenario("group", "Большая группа пешеходов", "Девять человек вместе ожидают на одном тротуаре", 90, "group", _scheduled_arrivals(45, 90), (Request(8, 70, 9, "south"),)),
+    Scenario("empty", "Свободная дорога", "Свободная дорога и быстрый отклик", 70, "clear", (), (Request(3, 50, 1, "south"),)),
+    Scenario("failure", "Отказ камеры", "Умеренный поток, потеря изображения и резервный цикл", 90, "fault", _scheduled_arrivals(30, 90), (Request(9, 80, 2, "north"),), (30, 75)),
 )
 
 SCENARIOS = [
@@ -102,7 +119,16 @@ SCENARIOS = [
     for s in SCENARIO_DATA
 ]
 SCENARIOS_BY_ID = {s.id: s for s in SCENARIO_DATA}
-PHASE_ORDER = ("vehicle_green", "warning", "all_red_to_ped", "pedestrian_green", "all_red_to_vehicle")
+
+def _durations(config: Config, mode: str) -> dict[str, int]:
+    plan = config.phase_plan
+    return {
+        "vehicle_yellow": plan.warning if mode == "manual" else WARNING_SECONDS,
+        "all_red_to_pedestrian": plan.all_red_to_ped if mode == "manual" else ALL_RED_SECONDS,
+        "pedestrian_walk": plan.pedestrian_green if mode == "manual" else config.pedestrian_green,
+        "pedestrian_clearance": plan.pedestrian_clearance if mode == "manual" else config.pedestrian_clearance,
+        "all_red_to_vehicle": plan.all_red_to_vehicle if mode == "manual" else ALL_RED_SECONDS,
+    }
 
 
 def _observation(scenario: Scenario, second: int) -> dict:
@@ -142,8 +168,9 @@ def _safety_violations(frames: list[dict]) -> int:
         else:
             runs.append((phase, 1))
     violations = 0
-    minimums = {"warning": WARNING_SECONDS, "all_red_to_ped": ALL_RED_SECONDS,
-                "pedestrian_green": 8, "all_red_to_vehicle": ALL_RED_SECONDS}
+    minimums = {"vehicle_yellow": WARNING_SECONDS, "all_red_to_pedestrian": ALL_RED_SECONDS,
+                "pedestrian_walk": 8, "pedestrian_clearance": 3,
+                "all_red_to_vehicle": ALL_RED_SECONDS}
     for index, (phase, length) in enumerate(runs[:-1]):
         next_phase = runs[index + 1][0]
         if next_phase != PHASE_ORDER[(PHASE_ORDER.index(phase) + 1) % len(PHASE_ORDER)]:
@@ -165,20 +192,18 @@ def _phase_metrics(frames: list[dict]) -> dict:
     }
 
 
-def _phase_duration(phase: str, mode: str, config: Config) -> int:
-    if mode == "manual":
-        return getattr(config.phase_plan, phase)
-    if phase == "vehicle_green":
-        return FALLBACK_VEHICLE_SECONDS if mode in ("fixed", "fallback") else config.min_vehicle_green
-    if phase == "pedestrian_green":
-        return 12 if mode in ("fixed", "fallback") else config.pedestrian_green
-    return WARNING_SECONDS if phase == "warning" else ALL_RED_SECONDS
-
-
 def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
-    phase = "vehicle_green"
-    phase_since = 0
-    pending: list[int] = []
+    mode_config = "manual" if config.control_mode == "manual" and not fixed else "adaptive"
+    durations = _durations(config, mode_config)
+    if fixed:
+        durations["pedestrian_walk"] = 12
+    controller = SimulatedController(durations,
+        config.phase_plan.vehicle_green if mode_config == "manual" else config.min_vehicle_green,
+        config.phase_plan.vehicle_green if mode_config == "manual" else FALLBACK_VEHICLE_SECONDS)
+    driver = PhaseDriver(controller)
+    priority = AdaptivePriority(segment_length_km=config.segment_length_km,
+        k_ref=config.k_ref, t_max_s=config.t_max_s,
+        density_window_s=config.density_window_s)
     served: set[int] = set()
     waits: list[int] = []
     frames: list[dict] = []
@@ -192,81 +217,36 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
         mode = "fallback" if not healthy else "fixed" if fixed else config.control_mode
         flow = _traffic_flow(scenario, second)
         clear_gap = healthy and _clear_road(scenario, second)
-
-        # A detected request remains latched until a pedestrian green phase.
-        # Ending a mock observation window must never silently erase it.
-        if healthy:
-            for index, request in enumerate(scenario.requests):
-                if request.start <= second < request.end and index not in pending and index not in served:
-                    pending.append(index)
-                    events.append({"time": second, "type": "request", "text":
-                                   "Обнаружена группа пешеходов" if request.people >= config.group_threshold
-                                   else "Обнаружен пешеходный запрос"})
-
-        elapsed = second - phase_since
-        next_phase = None
-        next_reason = None
-        reason = "Автомобилям открыт проезд"
-
-        if phase == "vehicle_green":
-            minimum = _phase_duration(phase, mode, config)
-            if elapsed >= minimum:
-                if mode == "fallback":
-                    next_phase, next_reason = "warning", "Резервный цикл: автомобильная фаза завершена"
-                elif mode == "fixed":
-                    next_phase, next_reason = "warning", "Фиксированный цикл: автомобильная фаза завершена"
-                elif mode == "manual":
-                    next_phase, next_reason = "warning", "Ручной план: автомобильная фаза завершена"
-                elif pending:
-                    oldest_wait = second - min(scenario.requests[i].start for i in pending)
-                    group = any(scenario.requests[i].people >= config.group_threshold for i in pending)
-                    wait_limit = config.max_group_wait if group else config.max_single_wait
-                    if clear_gap:
-                        next_phase, next_reason = "warning", "Свободная дорога подтверждена за 5 секунд"
-                    elif oldest_wait >= wait_limit - WARNING_SECONDS - ALL_RED_SECONDS:
-                        next_phase, next_reason = "warning", "Приоритет группы: предел ожидания" if group else "Предел ожидания пешехода"
-                    elif group and oldest_wait >= 8:
-                        next_phase, next_reason = "warning", "Приоритет группы пешеходов"
-                    elif not group and flow <= config.low_flow_threshold and oldest_wait >= 5:
-                        next_phase, next_reason = "warning", "Низкая интенсивность потока за предыдущие 30 секунд"
-            if not next_phase:
-                if mode == "fallback":
-                    reason = "Камера недоступна: работает резервный цикл"
-                elif mode == "fixed":
-                    reason = "Автомобилям открыт проезд по фиксированному циклу"
-                elif mode == "manual":
-                    reason = "Автомобилям открыт проезд по ручному плану"
-                elif pending:
-                    reason = "Ожидание минимальной автомобильной фазы" if elapsed < minimum else "Ожидание безопасного окна в потоке"
-        elif phase == "warning":
-            reason = "Предупреждение: завершение автомобильной фазы"
-            if elapsed >= _phase_duration(phase, mode, config):
-                next_phase, next_reason = "all_red_to_ped", "Защитный интервал: все сигналы запрещающие"
-        elif phase == "all_red_to_ped":
-            reason = "Защитный интервал перед переходом"
-            if elapsed >= _phase_duration(phase, mode, config):
-                next_phase, next_reason = "pedestrian_green", "Пешеходная фаза включена после защитного интервала"
-        elif phase == "pedestrian_green":
-            reason = "Пешеходам открыт переход"
-            if elapsed >= _phase_duration(phase, mode, config):
-                next_phase, next_reason = "all_red_to_vehicle", "Защитный интервал перед проездом"
-        else:
-            reason = "Защитный интервал перед проездом"
-            if elapsed >= _phase_duration(phase, mode, config):
-                next_phase, next_reason = "vehicle_green", "Автомобильная фаза восстановлена"
-
-        if next_phase:
-            phase, phase_since, reason = next_phase, second, next_reason
+        waiting_ids = frozenset((index, person) for index, request in enumerate(scenario.requests)
+                                if request.start <= second < request.end
+                                for person in range(request.people)) if healthy else frozenset()
+        segment_travel_s = 3600 * config.segment_length_km / DEMO_APPROACH_SPEED_KMH
+        cars = frozenset(index for index, arrival in enumerate(scenario.arrivals)
+                         if arrival <= second < arrival + segment_travel_s) if healthy else frozenset()
+        decision = priority.update(TrackedObservation(second, waiting_ids, cars, healthy))
+        before = controller.read_phase(second)
+        phase_state, _ = driver.step(second,
+            request=(decision.request_pending if mode == "adaptive" else mode == "manual"),
+            camera_ok=mode not in ("fixed", "fallback"))
+        phase = phase_state.phase
+        if phase != before.phase:
             switches += 1
-            events.append({"time": second, "type": "phase", "text": reason, "phase": phase})
-            if phase == "pedestrian_green" and first_pedestrian_green is None:
+            events.append({"time": second, "type": "phase", "text": f"Фаза: {phase}", "phase": phase})
+            if phase == "pedestrian_walk" and first_pedestrian_green is None:
                 first_pedestrian_green = second
-
-        if phase == "pedestrian_green" and pending:
-            for index in pending:
-                waits.append(second - scenario.requests[index].start)
-                served.add(index)
-            pending.clear()
+            if phase == "pedestrian_walk":
+                for index, _ in priority.pedestrian_walk_started():
+                    if index not in served:
+                        waits.append(second - scenario.requests[index].start)
+                        served.add(index)
+        if mode == "adaptive" and decision.request_pending:
+            if second == 0 or not frames[-1]["request_pending"]:
+                events.append({"time": second, "type": "request", "text": "Адаптивный запрос пешеходной фазы"})
+        reason = ("Резервный цикл: недоступны данные камеры" if mode == "fallback"
+                  else "Фиксированный цикл" if mode == "fixed"
+                  else "Ручной план" if mode == "manual"
+                  else "Запрос пешеходной фазы сохранён" if decision.request_pending
+                  else "Расчёт приоритета по плотности и ожиданию")
 
         if scenario.camera_outage:
             if second == scenario.camera_outage[0]:
@@ -278,12 +258,23 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
             "time": second, "phase": phase, "mode": mode, "healthy": healthy,
             "new_vehicles": sum(arrival == second for arrival in scenario.arrivals),
             "new_pedestrians": sum(request.people for request in scenario.requests if request.start == second),
+            "pedestrian_groups": [{"count": request.people, "side": request.side}
+                                  for request in scenario.requests if request.start == second],
             "vehicles": observed["vehicles"] if healthy else None,
             "vehicle_positions": observed["vehicle_positions"] if healthy else [],
             "pedestrians": observed["pedestrians"] if healthy else None,
             "flow_per_min": flow if healthy else None,
             "clear_gap": clear_gap,
-            "waiting_seconds": second - min(scenario.requests[i].start for i in pending) if pending else 0,
+            "waiting_seconds": round(decision.wait_s or 0, 2),
+            "timestamp_s": second, "phase_elapsed_s": phase_state.elapsed_s,
+            "n_waiting": decision.n_waiting, "wait_s": decision.wait_s,
+            "vehicles_in_segment": decision.vehicles_in_segment,
+            "k": round(decision.k, 3) if decision.k is not None else None,
+            "k_ref": decision.k_ref,
+            "weight": round(decision.weight, 4) if decision.weight is not None else None,
+            "priority": round(decision.priority, 4) if decision.priority is not None else None,
+            "request_pending": priority.request_pending if mode == "adaptive" else False,
+            "data_quality": decision.quality if driver.last_quality == "ok" else driver.last_quality,
             "reason": reason,
         })
 
@@ -350,7 +341,9 @@ def simulate_custom(profile: TrafficProfile, config: Config) -> dict:
     pedestrians = _scheduled_arrivals(pedestrian_rate, duration)
     scenario = Scenario(
         "custom", "Пользовательский поток", "Потоки заданы в интерфейсе", duration, "custom",
-        arrivals, tuple(Request(second, min(duration + 1, second + 30), 1) for second in pedestrians),
+        arrivals, tuple(Request(second, min(duration + 1, second + 30), 1,
+                                "south" if index % 2 == 0 else "north")
+                        for index, second in enumerate(pedestrians)),
     )
     result = _run(scenario, config)
     baseline = _run(scenario, config, fixed=True)

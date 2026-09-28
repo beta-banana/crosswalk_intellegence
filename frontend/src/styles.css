@@ -95,9 +95,10 @@ body{color:var(--text-primary);background:var(--surface-page);-webkit-font-smoot
 .flow-chart svg .axis{stroke:#b9cbcf}
 .flow-chart svg .gridline{stroke:#cfdddf}
 .phase-vehicle_green{background:var(--phase-vehicle)}
-.phase-warning{background:var(--phase-warning)}
-.phase-all_red_to_ped,.phase-all_red_to_vehicle{background:var(--phase-stop)}
-.phase-pedestrian_green{background:var(--phase-pedestrian)}
+.phase-warning,.phase-vehicle_yellow{background:var(--phase-warning)}
+.phase-all_red_to_ped,.phase-all_red_to_pedestrian,.phase-all_red_to_vehicle{background:var(--phase-stop)}
+.phase-pedestrian_green,.phase-pedestrian_walk{background:var(--phase-pedestrian)}
+.phase-pedestrian_clearance{background:#63a8b9}
 .legend-car{background:var(--phase-vehicle)}
 .legend-warn{background:var(--phase-warning)}
 .legend-stop{background:var(--phase-stop)}
