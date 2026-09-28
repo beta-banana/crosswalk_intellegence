@@ -90,6 +90,40 @@ function TrafficStats({ summary, baseline }: { summary: Report['summary']; basel
   </section>
 }
 
+function DecisionLogicExplainer({ config }: { config: Config }) {
+  const warningSeconds = 3
+  const allRedSeconds = 2
+  const protectionSeconds = warningSeconds + allRedSeconds
+  const singlePreparationAt = Math.max(0, config.max_single_wait - protectionSeconds)
+  const groupPreparationAt = Math.max(0, config.max_group_wait - protectionSeconds)
+  const adaptiveActive = config.control_mode === 'adaptive'
+
+  return <section className={`decision-explainer panel ${adaptiveActive ? '' : 'is-inactive'}`} aria-label="Логика включения пешеходного зелёного">
+    <div className="decision-explainer-head">
+      <div><span className="section-kicker"><Zap size={16}/> ЛОГИКА РЕШЕНИЯ</span><h2>Когда модель включает зелёный пешеходам</h2><p>{adaptiveActive ? `Сначала система фиксирует запрос от пешехода и ждёт минимум ${config.min_vehicle_green} с автомобильного зелёного. Затем достаточно выполнить одно из условий ниже.` : 'Ниже показана адаптивная формула, но сейчас она не применяется: в ручном режиме фазы переключаются по заданному плану.'}</p></div>
+      <span className={`logic-mode-badge ${adaptiveActive ? '' : 'inactive'}`}>{adaptiveActive ? 'Адаптивный режим включён' : 'Сейчас выбран ручной план'}</span>
+    </div>
+
+    <div className="plain-formula" role="group" aria-label="Формула решения">
+      <span className="formula-caption">ФОРМУЛА ПРОСТЫМИ СЛОВАМИ</span>
+      <div className="formula-line"><strong>Начать переключение</strong><span>=</span><b>есть пешеход</b><span>И</span><b>прошло {config.min_vehicle_green} с</b><span>И</span><b>сработало любое условие</b></div>
+      <div className="formula-conditions">
+        <div><span>01</span><strong>Дорога свободна</strong><small>машин нет подряд 5 секунд</small></div>
+        <div><span>02</span><strong>Человек ждёт долго</strong><small>подготовка с {singlePreparationAt} с, зелёный не позднее {config.max_single_wait} с</small></div>
+        <div><span>03</span><strong>Собралась группа</strong><small>от {config.group_threshold} человек и ожидание от 8 секунд</small></div>
+        <div><span>04</span><strong>Низкий поток</strong><small>не больше {config.low_flow_threshold} авто/мин и ожидание от 5 секунд</small></div>
+      </div>
+    </div>
+
+    <div className="formula-details">
+      <div><ShieldCheck size={20}/><p><strong>Безопасность важнее скорости.</strong> После решения идут {warningSeconds} с предупреждения и {allRedSeconds} с общего красного. Только потом включается пешеходный зелёный.</p></div>
+      <div><Clock3 size={20}/><p><strong>Группа получает приоритет.</strong> Для {config.group_threshold}+ человек подготовка начинается не позднее {groupPreparationAt} с ожидания, чтобы зелёный включился не позднее {config.max_group_wait} с.</p></div>
+      <div><Gauge size={20}/><p><strong>Поток считается за последние 30 секунд.</strong> Количество новых автомобилей умножается на два и переводится в показатель «авто в минуту».</p></div>
+    </div>
+    <p className="formula-disclaimer"><CircleHelp size={16}/> Это формула виртуального контроллера для демонстрации на записи. Она не управляет реальным светофором и требует отдельной проверки для реальной дороги.</p>
+  </section>
+}
+
 function EventList({ events, current, onChange, limit = 5 }: { events: Event[]; current: number; onChange: (t: number) => void; limit?: number }) {
   const past = [...events].filter(e => e.time <= current).reverse().slice(0, limit)
   const upcoming = past.length ? [] : events.filter(e => e.time > current).slice(0, limit)
@@ -110,6 +144,7 @@ function AnalyticsOverview({ report, current, onChange, onSettings }: { report: 
       <div className="lead-performance"><CircleHelp size={28}/><div><strong>Запись и модель</strong><p>Видеоданные показывают поток и людей; переключения светофора здесь рассчитаны виртуально.</p></div></div>
     </section>
     <TrafficStats summary={summary} baseline={report.baseline}/>
+    <DecisionLogicExplainer config={report.config}/>
     <div className="analytics-grid"><div className="panel"><FlowChart frames={report.frames} current={current}/></div><div className="panel compare-panel"><span className="section-kicker">МОДЕЛЬНЫЕ РЕЖИМЫ</span><h3>Одна запись, два расчёта</h3><p>Среднее ожидание только по обслуженным запросам</p><div className="compare-row"><span>{activeCycleName}</span><strong>{displayNumber(summary.mean_wait ?? '—')} с</strong><small>{summary.served_requests} обслужено</small></div><div className="compare-row fixed"><span>Постоянный цикл</span><strong>{displayNumber(baselineWait ?? '—')} с</strong><small>{report.baseline.served_requests} обслужено</small></div><div className="compare-result"><CircleHelp size={19}/><span>{comparisonText}</span></div></div></div>
     <div className="analytics-grid second"><div className="panel"><Timeline frames={report.frames} current={current} onChange={onChange} compact/></div><div className="panel recommendation"><span className="section-kicker"><Sparkles size={16}/> ПОЯСНЕНИЕ</span><h3>Что показывает модель на записи</h3><p>{report.recommendation}</p><button className="text-link" onClick={onSettings}>Настроить параметры <ArrowRight size={17}/></button></div></div>
   </>

@@ -149,9 +149,34 @@ body{color:var(--text-primary);background:var(--surface-page);-webkit-font-smoot
 .traffic-stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .traffic-stats-grid .metric{border:1px solid var(--border-default);background:var(--surface-raised);box-shadow:var(--shadow-panel);min-width:0}
 .traffic-stats-grid .metric-number{font-size:27px}
+.decision-explainer{margin-bottom:18px;padding:24px;overflow:hidden}
+.decision-explainer-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:18px}
+.decision-explainer-head h2{font-size:20px;margin:9px 0 6px;color:var(--text-strong)}
+.decision-explainer-head p{font-size:12px;line-height:1.55;color:var(--text-secondary);margin:0;max-width:74ch}
+.logic-mode-badge{flex:none;border-radius:999px;background:#e4f4ef;color:#247967;padding:8px 11px;font-size:10px;font-weight:700}
+.logic-mode-badge.inactive{background:#f6efe3;color:#9a712e}
+.plain-formula{background:#f2f8f7;border:1px solid #d8e9e6;border-radius:10px;padding:18px}
+.formula-caption{display:block;color:var(--accent-primary);font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:10px}
+.formula-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#799198;font-size:12px}
+.formula-line strong{color:#1e4e58;font-size:15px}
+.formula-line b{font-weight:700;color:#326a70;background:white;border:1px solid #d7e7e5;border-radius:7px;padding:7px 9px}
+.formula-conditions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:15px}
+.formula-conditions>div{position:relative;background:white;border:1px solid #dce9e7;border-radius:8px;padding:14px;min-height:91px}
+.formula-conditions>div>span{font:600 9px 'IBM Plex Mono',monospace;color:#9bb2b6;position:absolute;right:10px;top:9px}
+.formula-conditions strong{display:block;color:#305761;font-size:12px;padding-right:20px;margin-bottom:7px}
+.formula-conditions small{display:block;color:#789098;font-size:10px;line-height:1.4}
+.formula-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.formula-details>div{display:flex;gap:11px;border:1px solid var(--border-default);border-radius:8px;padding:14px;color:#409b92}
+.formula-details p{font-size:10px;line-height:1.5;color:var(--text-secondary);margin:0}
+.formula-details strong{color:var(--text-primary)}
+.formula-details svg{flex:none}
+.formula-disclaimer{display:flex;align-items:center;gap:8px;font-size:10px;line-height:1.45;color:var(--text-tertiary);margin:14px 0 0}
+.formula-disclaimer svg{flex:none;color:#6b9e9c}
+.decision-explainer.is-inactive .plain-formula,.decision-explainer.is-inactive .formula-details{opacity:.72}
 .sidebar .nav-item:hover{background:#294550;color:white}
 .sidebar .nav-item.active:hover{background:#2a5963;color:white}
-@media(max-width:680px){.traffic-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phase-builder-head{display:block}.phase-builder-head>strong{display:block;margin-top:12px}.phase-builder-head>strong small{display:inline;margin-left:7px}.mode-toggle{width:100%}.mode-toggle button{flex:1}}
+@media(max-width:980px){.formula-conditions{grid-template-columns:repeat(2,minmax(0,1fr))}.formula-details{grid-template-columns:1fr}}
+@media(max-width:680px){.traffic-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.decision-explainer{padding:18px}.decision-explainer-head{display:block}.logic-mode-badge{display:inline-block;margin-top:13px}.formula-conditions{grid-template-columns:1fr}.formula-line{align-items:flex-start}.formula-line>span{padding-top:8px}.phase-builder-head{display:block}.phase-builder-head>strong{display:block;margin-top:12px}.phase-builder-head>strong small{display:inline;margin-left:7px}.mode-toggle{width:100%}.mode-toggle button{flex:1}}
 @media(max-width:420px){.phase-control{gap:9px}.phase-control-index{width:19px}.phase-control-body strong{font-size:11px}.traffic-stats-grid .metric-number{font-size:22px}}
 /* Model comparisons show coverage, so each row needs room for its count. */
 .compare-panel .compare-row{grid-template-columns:minmax(95px,1fr) auto auto;gap:10px}
