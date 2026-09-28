@@ -82,3 +82,78 @@ def test_default_policy_improves_waiting_and_reports_vehicle_availability():
         assert summary["max_wait"] <= 20
         assert summary["vehicle_green_seconds"] + summary["vehicle_closed_seconds"] == len(report["frames"])
         assert 0 < summary["vehicle_green_share"] <= 100
+
+
+def test_custom_traffic_profile_changes_both_flows_and_is_repeatable():
+    client = TestClient(app)
+    base = {"scenario_id": "custom", "config": {"control_mode": "manual"},
+            "profile": {"vehicle_rate": 6, "pedestrian_rate": 2,
+                        "time_of_day": "day", "day_type": "weekday"}}
+    quiet = client.post("/api/simulate", json=base)
+    busy_payload = {**base, "profile": {**base["profile"],
+                                          "vehicle_rate": 30, "pedestrian_rate": 12}}
+    busy = client.post("/api/simulate", json=busy_payload)
+    assert quiet.status_code == busy.status_code == 200
+    assert quiet.json()["frames"] == client.post("/api/simulate", json=base).json()["frames"]
+    assert busy.json()["summary"]["vehicles"] > quiet.json()["summary"]["vehicles"]
+    assert busy.json()["summary"]["pedestrians"] > quiet.json()["summary"]["pedestrians"]
+    assert sum(frame["new_vehicles"] for frame in busy.json()["frames"]) == busy.json()["summary"]["vehicles"]
+    assert sum(frame["new_pedestrians"] for frame in busy.json()["frames"]) == busy.json()["summary"]["pedestrians"]
+    assert busy.json()["summary"]["safety_violations"] == 0
+
+
+def test_day_type_and_time_affect_custom_demand():
+    client = TestClient(app)
+    profile = {"vehicle_rate": 20, "pedestrian_rate": 8,
+               "time_of_day": "morning", "day_type": "weekday"}
+    weekday = client.post("/api/simulate", json={"scenario_id": "custom", "profile": profile}).json()
+    weekend = client.post("/api/simulate", json={"scenario_id": "custom", "profile":
+                                                    {**profile, "day_type": "weekend"}}).json()
+    assert weekday["summary"]["vehicles"] > weekend["summary"]["vehicles"]
+    assert weekday["profile"]["effective_vehicle_rate"] > weekend["profile"]["effective_vehicle_rate"]
+
+
+def test_custom_profile_validates_limits_and_accepts_empty_flow():
+    client = TestClient(app)
+    invalid = client.post("/api/simulate", json={"scenario_id": "custom", "profile":
+                                                  {"vehicle_rate": 121, "pedestrian_rate": 2}})
+    assert invalid.status_code == 422
+    empty = client.post("/api/simulate", json={"scenario_id": "custom", "profile":
+                                                {"vehicle_rate": 0, "pedestrian_rate": 0}})
+    assert empty.status_code == 200
+    assert empty.json()["summary"]["vehicles"] == 0
+    assert empty.json()["summary"]["pedestrians"] == 0
+    assert empty.json()["summary"]["served_requests"] == 0
+
+
+def test_default_and_night_pedestrian_flows_are_visibly_denser():
+    client = TestClient(app)
+    default = client.post("/api/simulate", json={"scenario_id": "custom"})
+    assert default.status_code == 200
+    assert default.json()["profile"]["pedestrian_rate"] == 30
+    assert default.json()["summary"]["pedestrians"] == 60
+
+    night = client.post("/api/simulate", json={"scenario_id": "custom", "profile": {
+        "pedestrian_rate": 40, "time_of_day": "night", "day_type": "weekday"}})
+    assert night.status_code == 200
+    assert night.json()["profile"]["effective_pedestrian_rate"] == 30
+    assert night.json()["summary"]["pedestrians"] == 60
+    assert client.post("/api/simulate", json={"scenario_id": "custom", "profile": {
+        "pedestrian_rate": 61}}).status_code == 422
+
+
+def test_default_and_night_vehicle_flows_are_denser():
+    client = TestClient(app)
+    default = client.post("/api/simulate", json={"scenario_id": "custom"})
+    assert default.status_code == 200
+    assert default.json()["profile"]["vehicle_rate"] == 45
+    assert default.json()["summary"]["vehicles"] == 90
+
+    night = client.post("/api/simulate", json={"scenario_id": "custom", "profile": {
+        "vehicle_rate": 90, "time_of_day": "night", "day_type": "weekday"}})
+    assert night.status_code == 200
+    assert night.json()["profile"]["effective_vehicle_rate"] == 58.5
+    assert night.json()["summary"]["vehicles"] == 117
+    assert night.json()["summary"]["safety_violations"] == 0
+    assert client.post("/api/simulate", json={"scenario_id": "custom", "profile": {
+        "vehicle_rate": 121}}).status_code == 422

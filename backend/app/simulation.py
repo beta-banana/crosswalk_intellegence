@@ -38,6 +38,37 @@ class Config(BaseModel):
     pedestrian_green: int = Field(8, ge=8, le=30)
 
 
+
+
+class TrafficProfile(BaseModel):
+    vehicle_rate: int = Field(45, ge=0, le=120, description="Vehicles per minute before day adjustment")
+    pedestrian_rate: int = Field(30, ge=0, le=60, description="Pedestrians per minute before day adjustment")
+    time_of_day: Literal["morning", "day", "evening", "night"] = "day"
+    day_type: Literal["weekday", "weekend", "holiday"] = "weekday"
+
+
+DEMAND_MULTIPLIERS = {
+    "weekday": {"morning": (1.35, 1.15), "day": (1.0, 1.0),
+                "evening": (1.25, 1.2), "night": (0.65, 0.75)},
+    "weekend": {"morning": (0.65, 0.7), "day": (0.85, 1.2),
+                "evening": (1.05, 1.3), "night": (0.7, 0.8)},
+    "holiday": {"morning": (0.55, 0.8), "day": (0.75, 1.35),
+                "evening": (0.85, 1.4), "night": (0.65, 0.9)},
+}
+
+
+def _scheduled_arrivals(rate: float, duration: int) -> tuple[int, ...]:
+    """Distribute demand reproducibly across one-second simulation steps."""
+    arrivals: list[int] = []
+    balance = 0.0
+    for second in range(1, duration + 1):
+        balance += rate / 60
+        while balance >= 1 - 1e-9:
+            arrivals.append(second)
+            balance -= 1
+    return tuple(arrivals)
+
+
 @dataclass(frozen=True)
 class Request:
     start: int
@@ -245,6 +276,8 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
 
         frames.append({
             "time": second, "phase": phase, "mode": mode, "healthy": healthy,
+            "new_vehicles": sum(arrival == second for arrival in scenario.arrivals),
+            "new_pedestrians": sum(request.people for request in scenario.requests if request.start == second),
             "vehicles": observed["vehicles"] if healthy else None,
             "vehicle_positions": observed["vehicle_positions"] if healthy else [],
             "pedestrians": observed["pedestrians"] if healthy else None,
@@ -260,7 +293,7 @@ def _run(scenario: Scenario, config: Config, fixed: bool = False) -> dict:
     summary = {
         "vehicles": len(scenario.arrivals),
         "pedestrians": sum(r.people for r in scenario.requests),
-        "peak_pedestrians": max(r.people for r in scenario.requests),
+        "peak_pedestrians": max((r.people for r in scenario.requests), default=0),
         "mean_flow_per_min": round(sum(flows) / len(flows), 1) if flows else None,
         "peak_flow_per_min": max(flows) if flows else None,
         "mean_vehicles_in_zone": round(sum(vehicles_in_zone) / len(vehicles_in_zone), 1) if vehicles_in_zone else None,
@@ -305,4 +338,32 @@ def simulate(scenario_id: str, config: Config) -> dict:
         "modeled_wait_difference": difference,
         "recommendation": recommendations[scenario.id],
         "disclaimer": "Демонстрационная симуляция. Сравнение циклов относится только к выбранному эпизоду.",
+    }
+
+
+def simulate_custom(profile: TrafficProfile, config: Config) -> dict:
+    duration = 120
+    vehicle_factor, pedestrian_factor = DEMAND_MULTIPLIERS[profile.day_type][profile.time_of_day]
+    vehicle_rate = round(profile.vehicle_rate * vehicle_factor, 2)
+    pedestrian_rate = round(profile.pedestrian_rate * pedestrian_factor, 2)
+    arrivals = _scheduled_arrivals(vehicle_rate, duration)
+    pedestrians = _scheduled_arrivals(pedestrian_rate, duration)
+    scenario = Scenario(
+        "custom", "Пользовательский поток", "Потоки заданы в интерфейсе", duration, "custom",
+        arrivals, tuple(Request(second, min(duration + 1, second + 30), 1) for second in pedestrians),
+    )
+    result = _run(scenario, config)
+    baseline = _run(scenario, config, fixed=True)
+    return {
+        "scenario_id": "custom",
+        "scenario": {"id": "custom", "name": scenario.name, "description": scenario.description,
+                     "duration": duration, "tone": "custom", "kind": "simulation"},
+        "config": config.model_dump(),
+        "profile": {**profile.model_dump(), "effective_vehicle_rate": vehicle_rate,
+                    "effective_pedestrian_rate": pedestrian_rate},
+        **result,
+        "baseline": baseline["summary"],
+        "modeled_wait_difference": None,
+        "recommendation": "Потоки рассчитаны по выбранной интенсивности, времени суток и типу дня.",
+        "disclaimer": "Схематичная демонстрация на синтетических потоках, не прогноз реального объекта.",
     }

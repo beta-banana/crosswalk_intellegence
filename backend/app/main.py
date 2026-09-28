@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from .simulation import Config, SCENARIOS, simulate
+from .simulation import Config, SCENARIOS, TrafficProfile, simulate, simulate_custom
 from .video_episode import (
     VIDEO_ID,
     is_video_scenario,
@@ -22,6 +22,7 @@ app = FastAPI(title="Smart Crossing Demo API", version="1.1.0")
 class SimulationRequest(BaseModel):
     scenario_id: str = "normal"
     config: Config = Field(default_factory=Config)
+    profile: TrafficProfile = Field(default_factory=TrafficProfile)
 
 
 @app.get("/api/health")
@@ -37,6 +38,8 @@ def scenarios() -> list[dict]:
 @app.post("/api/simulate")
 def run_simulation(payload: SimulationRequest) -> dict:
     try:
+        if payload.scenario_id == "custom":
+            return simulate_custom(payload.profile, payload.config)
         if is_video_scenario(payload.scenario_id):
             return simulate_video(payload.config, payload.scenario_id)
         return simulate(payload.scenario_id, payload.config)
