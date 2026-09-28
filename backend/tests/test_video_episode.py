@@ -36,33 +36,35 @@ def test_video_episode_uses_json_observations_and_summary():
     assert report["summary"]["vehicles"] == sum(row["new_vehicles"] for row in observations)
     assert report["summary"]["pedestrians"] == sum(row["new_pedestrians"] for row in observations)
     assert report["summary"]["safety_violations"] == 0
-    assert report["summary"]["max_wait"] <= 20
+    assert report["summary"]["max_wait"] is not None
+    assert all(frame["data_quality"] == "aggregate_replay_only" for frame in report["frames"])
+    assert all(frame["k"] is None and frame["n_waiting"] is None for frame in report["frames"])
+    assert all(frame["mode"] == "fallback" for frame in report["frames"])
     assert 0 < report["summary"]["vehicle_green_share"] < 100
     assert report["modeled_wait_difference"] is None
     assert report["summary"]["vehicle_green_seconds"] + report["summary"]["vehicle_closed_seconds"] == len(observations)
 
 
-def test_persistent_queue_rearms_request_and_covers_long_crossing_block():
+def test_recording_does_not_use_aggregate_cross_count_to_shorten_clearance():
     report = TestClient(app).post("/api/simulate", json={"scenario_id": "video"}).json()
     frames = report["frames"]
 
-    assert any(event["text"] == "Очередь сохраняется после пешеходной фазы"
-               for event in report["events"])
     assert all(frame["on_road"] > 0 for frame in frames[90:138])
-    assert all(frame["phase"] == "pedestrian_green" for frame in frames[90:138])
+    assert any(frame["phase"] == "pedestrian_clearance" for frame in frames[90:138])
+    assert report["summary"]["safety_violations"] == 0
 
 
 def test_recording_phase_overlay_ignores_short_cv_bursts_and_matches_crossing():
     report = TestClient(app).post("/api/simulate", json={"scenario_id": "video"}).json()
     frames = report["frames"]
 
-    assert all(frame["display_phase"] != "pedestrian_green" for frame in frames[:80])
-    assert all(frame["display_phase"] == "warning" for frame in frames[80:83])
-    assert all(frame["display_phase"] == "all_red_to_ped" for frame in frames[83:85])
-    assert all(frame["display_phase"] == "pedestrian_green" for frame in frames[85:138])
-    assert all(frame["display_phase"] == "all_red_to_vehicle" for frame in frames[138:140])
-    assert frames[140]["display_phase"] == "vehicle_green"
-    assert [event["time"] for event in report["display_events"]] == [80, 83, 85, 138, 140]
+    assert all(frame["display_phase"] != "pedestrian_walk" for frame in frames[:80])
+    assert all(frame["display_phase"] == "vehicle_yellow" for frame in frames[80:83])
+    assert all(frame["display_phase"] == "all_red_to_pedestrian" for frame in frames[83:85])
+    assert all(frame["display_phase"] == "pedestrian_walk" for frame in frames[85:138])
+    assert all(frame["display_phase"] == "pedestrian_clearance" for frame in frames[138:144])
+    assert frames[146]["display_phase"] == "vehicle_green"
+    assert [event["time"] for event in report["display_events"]] == [80, 83, 85, 138, 144, 146]
 
 
 def test_video_endpoint_supports_browser_range_requests():

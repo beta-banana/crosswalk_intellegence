@@ -13,10 +13,10 @@ from .simulation import (
     FLOW_WINDOW_SECONDS,
     WARNING_SECONDS,
     Config,
-    PHASE_ORDER,
     _phase_metrics,
     _safety_violations,
 )
+from .adaptive_control import SimulatedController
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -152,27 +152,31 @@ def _observed_phase_overlay(rows: list[dict]) -> tuple[list[str], list[str], lis
         warning_start = max(0, start - WARNING_SECONDS - ALL_RED_SECONDS)
         all_red_start = max(warning_start, start - ALL_RED_SECONDS)
         for second in range(warning_start, all_red_start):
-            phases[second] = "warning"
+            phases[second] = "vehicle_yellow"
         for second in range(all_red_start, start):
-            phases[second] = "all_red_to_ped"
+            phases[second] = "all_red_to_pedestrian"
         for second in range(start, end + 1):
-            phases[second] = "pedestrian_green"
-        for second in range(end + 1, min(len(rows), end + 1 + ALL_RED_SECONDS)):
+            phases[second] = "pedestrian_walk"
+        for second in range(end + 1, min(len(rows), end + 1 + 6)):
+            phases[second] = "pedestrian_clearance"
+        for second in range(end + 7, min(len(rows), end + 7 + ALL_RED_SECONDS)):
             phases[second] = "all_red_to_vehicle"
 
     reasons = {
         "vehicle_green": "По записи пешеходы не находятся на проезжей части",
-        "warning": "На записи начинается подготовка к пешеходной фазе",
-        "all_red_to_ped": "Защитный интервал перед выходом пешеходов",
-        "pedestrian_green": "На записи подтверждено устойчивое движение по переходу",
+        "vehicle_yellow": "На записи начинается подготовка к пешеходной фазе",
+        "all_red_to_pedestrian": "Защитный интервал перед выходом пешеходов",
+        "pedestrian_walk": "На записи подтверждено устойчивое движение по переходу",
+        "pedestrian_clearance": "Расчётное время освобождения перехода",
         "all_red_to_vehicle": "Защитный интервал после освобождения перехода",
     }
     display_reasons = [reasons[phase] for phase in phases]
     event_text = {
         "vehicle_green": "По записи проезд открыт транспорту",
-        "warning": "Начало предупреждающей фазы по записи",
-        "all_red_to_ped": "Защитный интервал перед переходом по записи",
-        "pedestrian_green": "На записи началось устойчивое движение пешеходов",
+        "vehicle_yellow": "Начало предупреждающей фазы по записи",
+        "all_red_to_pedestrian": "Защитный интервал перед переходом по записи",
+        "pedestrian_walk": "На записи началось устойчивое движение пешеходов",
+        "pedestrian_clearance": "Расчётное освобождение перехода",
         "all_red_to_vehicle": "Переход освобождён, защитный интервал",
     }
     events = [
@@ -184,10 +188,16 @@ def _observed_phase_overlay(rows: list[dict]) -> tuple[list[str], list[str], lis
 
 
 def _run(rows: list[dict], config: Config, fixed: bool) -> dict:
-    phase = "vehicle_green"
-    phase_since = 0
-    pending: list[int] = []
+    """Replay aggregate CV through the preset cycle; it cannot drive adaptation."""
+    controller = SimulatedController({
+        "vehicle_yellow": WARNING_SECONDS,
+        "all_red_to_pedestrian": ALL_RED_SECONDS,
+        "pedestrian_walk": 12,
+        "pedestrian_clearance": config.pedestrian_clearance,
+        "all_red_to_vehicle": ALL_RED_SECONDS,
+    }, config.min_vehicle_green, FALLBACK_VEHICLE_SECONDS)
     waits: list[int] = []
+    pending_since: int | None = None
     switches = 0
     first_pedestrian_green = None
     frames: list[dict] = []
@@ -195,7 +205,7 @@ def _run(rows: list[dict], config: Config, fixed: bool) -> dict:
 
     for second, observed in enumerate(rows):
         healthy = observed["camera_ok"]
-        mode = "fallback" if not healthy else "fixed" if fixed else config.control_mode
+        mode = "fixed" if fixed else "fallback"
         waiting = observed["waiting"] if healthy else None
         on_road = observed["on_road"] if healthy else None
         flow_first = max(0, second - FLOW_WINDOW_SECONDS + 1)
@@ -206,71 +216,20 @@ def _run(rows: list[dict], config: Config, fixed: bool) -> dict:
             for row in rows[clear_first:second + 1]
         )
 
-        previous_waiting = rows[second - 1]["waiting"] if second else 0
-        new_queue = healthy and waiting and not previous_waiting
-        queue_remains_after_service = (
-            healthy and waiting and not pending and phase == "all_red_to_vehicle"
-        )
-        if new_queue or queue_remains_after_service:
-            pending.append(second)
-            text = "Очередь сохраняется после пешеходной фазы" if queue_remains_after_service else "Обнаружен пешеходный запрос"
-            events.append({"time": second, "type": "request", "text": text})
-
-        elapsed = second - phase_since
-        next_phase = None
-        reason = "Автомобилям открыт проезд"
-        if phase == "vehicle_green":
-            minimum = (FALLBACK_VEHICLE_SECONDS if mode in ("fixed", "fallback")
-                       else config.phase_plan.vehicle_green if mode == "manual"
-                       else config.min_vehicle_green)
-            if elapsed >= minimum:
-                if mode in ("fixed", "manual", "fallback"):
-                    next_phase = "warning"
-                    reason = "Автомобильная фаза завершена по плану"
-                elif pending:
-                    oldest_wait = second - pending[0]
-                    group = waiting is not None and waiting >= config.group_threshold
-                    limit = config.max_group_wait if group else config.max_single_wait
-                    if clear_gap:
-                        next_phase, reason = "warning", "Свободная дорога подтверждена за 5 секунд"
-                    elif oldest_wait >= limit - WARNING_SECONDS - ALL_RED_SECONDS:
-                        next_phase, reason = "warning", "Предел ожидания пешеходов"
-                    elif group and oldest_wait >= 8:
-                        next_phase, reason = "warning", "Приоритет группы пешеходов"
-                    elif not group and flow is not None and flow <= config.low_flow_threshold and oldest_wait >= 5:
-                        next_phase, reason = "warning", "Низкая интенсивность транспорта"
-            if not next_phase and pending:
-                reason = "Ожидание безопасного окна для пешеходов"
-        elif phase == "warning":
-            reason = "Предупреждение перед остановкой транспорта"
-            if elapsed >= (config.phase_plan.warning if mode == "manual" else WARNING_SECONDS):
-                next_phase, reason = "all_red_to_ped", "Защитный интервал: все сигналы красные"
-        elif phase == "all_red_to_ped":
-            reason = "Защитный интервал перед переходом"
-            if elapsed >= (config.phase_plan.all_red_to_ped if mode == "manual" else ALL_RED_SECONDS):
-                next_phase, reason = "pedestrian_green", "Пешеходам открыт переход"
-        elif phase == "pedestrian_green":
-            reason = "Пешеходы переходят дорогу" if on_road else "Пешеходам открыт переход"
-            minimum = (12 if mode in ("fixed", "fallback") else config.phase_plan.pedestrian_green
-                       if mode == "manual" else config.pedestrian_green)
-            if elapsed >= minimum and (on_road == 0 or on_road is None):
-                next_phase, reason = "all_red_to_vehicle", "Проезжая часть освобождена"
-        else:
-            reason = "Защитный интервал перед проездом"
-            if elapsed >= (config.phase_plan.all_red_to_vehicle if mode == "manual" else ALL_RED_SECONDS):
-                next_phase, reason = "vehicle_green", "Автомобилям открыт проезд"
-
-        if next_phase:
-            assert next_phase == PHASE_ORDER[(PHASE_ORDER.index(phase) + 1) % len(PHASE_ORDER)]
-            phase, phase_since = next_phase, second
+        if healthy and waiting and pending_since is None:
+            pending_since = second
+        before = controller.read_phase(second)
+        state = controller.advance(second, request=False, fallback=True)
+        phase = state.phase
+        if phase != before.phase:
             switches += 1
-            events.append({"time": second, "type": "phase", "text": reason, "phase": phase})
-            if phase == "pedestrian_green" and first_pedestrian_green is None:
+            events.append({"time": second, "type": "phase", "text": f"Резервный цикл: {phase}", "phase": phase})
+            if phase == "pedestrian_walk" and first_pedestrian_green is None:
                 first_pedestrian_green = second
-
-        if phase == "pedestrian_green" and pending:
-            waits.extend(second - started for started in pending)
-            pending.clear()
+            if phase == "pedestrian_walk" and pending_since is not None:
+                waits.append(second - pending_since)
+                pending_since = None
+        reason = "Запись без track_id и участка плотности: работает резервный фиксированный цикл"
 
         frames.append({
             "time": second,
@@ -283,7 +242,12 @@ def _run(rows: list[dict], config: Config, fixed: bool) -> dict:
             "on_road": on_road,
             "flow_per_min": flow,
             "clear_gap": clear_gap,
-            "waiting_seconds": second - pending[0] if pending else 0,
+            "waiting_seconds": second - pending_since if pending_since is not None else 0,
+            "timestamp_s": second, "phase_elapsed_s": state.elapsed_s,
+            "n_waiting": None, "wait_s": None, "vehicles_in_segment": None,
+            "k": None, "k_ref": config.k_ref, "weight": None, "priority": None,
+            "request_pending": False,
+            "data_quality": "camera_unavailable" if not healthy else "aggregate_replay_only",
             "reason": reason,
         })
 
@@ -303,7 +267,7 @@ def _run(rows: list[dict], config: Config, fixed: bool) -> dict:
         "first_pedestrian_green": first_pedestrian_green,
         "phase_switches": switches,
         "served_requests": len(waits),
-        "unserved_requests": len(pending),
+        "unserved_requests": int(pending_since is not None),
         "camera_uptime": round(100 * len(healthy_frames) / len(frames), 1),
         "safety_violations": _safety_violations(frames),
         **_phase_metrics(frames),
@@ -319,13 +283,6 @@ def simulate_video(config: Config, scenario_id: str = VIDEO_ID) -> dict:
     for frame, phase, reason in zip(adaptive["frames"], display_phases, display_reasons):
         frame["display_phase"] = phase
         frame["display_reason"] = reason
-    adaptive_wait = adaptive["summary"]["mean_wait"]
-    baseline_wait = baseline["summary"]["mean_wait"]
-    comparable = (
-        adaptive["summary"]["served_requests"] == baseline["summary"]["served_requests"] > 0
-        and adaptive["summary"]["unserved_requests"] == baseline["summary"]["unserved_requests"]
-    )
-    difference = round(baseline_wait - adaptive_wait, 1) if comparable and adaptive_wait is not None and baseline_wait is not None else None
     return {
         "scenario_id": scenario_id,
         "scenario": video_scenario(scenario_id),
@@ -333,7 +290,7 @@ def simulate_video(config: Config, scenario_id: str = VIDEO_ID) -> dict:
         **adaptive,
         "display_events": display_events,
         "baseline": baseline["summary"],
-        "modeled_wait_difference": difference,
-        "recommendation": "CV-наблюдения синхронизированы с записью. Показанные фазы и ожидание рассчитывает виртуальный контроллер; состояния реального светофора не измерялись.",
-        "disclaimer": "CV-наблюдения получены из видеозаписи. Фазы, запросы и время ожидания рассчитаны моделью. Очередь на видео не меняется после модельных переключений, поэтому по этой записи нельзя определить, какой режим лучше. Незавершённые запросы не входят в среднее.",
+        "modeled_wait_difference": None,
+        "recommendation": "Запись содержит только секундные агрегаты без track_id, геометрии участка и состояния контроллера. Адаптивные решения отключены; показан резервный цикл.",
+        "disclaimer": "CV-наблюдения получены из готовой видеозаписи. Модельные сигналы рассчитаны фиксированным циклом, реальные фазы не измерялись. Ожидание оценочное; сравнение режимов по этой записи невозможно.",
     }
