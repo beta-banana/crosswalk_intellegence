@@ -1,19 +1,19 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, ArrowDownToLine, ArrowRight, BarChart3, Camera, Check, CircleHelp, Clock3, Gauge, LayoutDashboard, Menu, Pause, Play, RotateCcw, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, TrafficCone, Zap, TriangleAlert, Users } from 'lucide-react'
+import { Activity, ArrowDownToLine, ArrowRight, BarChart3, Camera, Check, ChevronDown, CircleHelp, Clock3, Gauge, LayoutDashboard, Menu, Pause, Play, RotateCcw, Settings2, ShieldCheck, SlidersHorizontal, Sparkles, TrafficCone, Zap, TriangleAlert, Users } from 'lucide-react'
 import type { Config, Event, Frame, Page, Phase, PhasePlan, Report, Scenario } from './types'
 const Simulator = lazy(() => import('./Simulator'))
 
 const defaultPhasePlan: PhasePlan = { vehicle_green: 30, warning: 3, all_red_to_ped: 2, pedestrian_green: 12, all_red_to_vehicle: 2 }
 const defaults: Config = { control_mode: 'adaptive', phase_plan: defaultPhasePlan, min_vehicle_green: 10, low_flow_threshold: 24, group_threshold: 5, max_single_wait: 20, max_group_wait: 15, pedestrian_green: 8 }
 const CONFIG_STORAGE_KEY = 'sc-config-v2'
-const recordedVideo: Scenario = { id: 'video', name: 'Переход · запись CV', description: 'Обработанная запись и синхронные посекундные наблюдения', duration: 162, tone: 'video', kind: 'video', period: 'Текущая запись', video_url: '/api/videos/video' }
+const fallbackVideo: Scenario = { id: 'video', name: 'Дневная запись', description: 'Дневные условия: основной эпизод с активным движением пешеходов по переходу', duration: 162, tone: 'day', kind: 'video', period: 'День', video_url: '/api/videos/video' }
 const phaseName: Record<Phase, string> = { vehicle_green: 'Авто · зелёный', warning: 'Авто · предупреждение', all_red_to_ped: 'Все · красный', pedestrian_green: 'Пешеходы · зелёный', all_red_to_vehicle: 'Все · красный' }
 const phaseShort: Record<Phase, string> = { vehicle_green: 'Авто', warning: 'Переход', all_red_to_ped: 'Стоп', pedestrian_green: 'Пешеходы', all_red_to_vehicle: 'Стоп' }
 const modeLabel: Record<Frame['mode'], string> = { adaptive: 'Адаптивный', manual: 'Ручной план', fallback: 'Резервный цикл', fixed: 'Постоянный цикл' }
 const time = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
 const displayNumber = (value: number | string) => typeof value === 'number' ? value.toLocaleString('ru-RU') : value
-const visiblePhase = (frame: Frame) => frame.phase
-const visibleReason = (frame: Frame) => frame.reason
+const visiblePhase = (frame: Frame) => frame.display_phase ?? frame.phase
+const visibleReason = (frame: Frame) => frame.display_reason ?? frame.reason
 
 function Signal({ label, active, type }: { label: string; active: boolean; type: 'car' | 'ped' }) {
   return <div className="signal"><span className="signal-label">{label}</span><div className="signal-head"><i className={!active ? 'lit red' : ''}/><i className={active ? `lit ${type === 'car' ? 'green' : 'cyan'}` : ''}/></div><span className="signal-state">{active ? 'ПРОХОД / ПРОЕЗД' : 'ОЖИДАНИЕ'}</span></div>
@@ -157,6 +157,8 @@ function PhaseBuilder({ draft, onChange }: { draft: Config; onChange: (next: Con
 
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
+  const [videoScenarios, setVideoScenarios] = useState<Scenario[]>([fallbackVideo])
+  const [scenarioId, setScenarioId] = useState(fallbackVideo.id)
   const [config, setConfig] = useState<Config>(() => { try { const saved = JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || '{}'); return { ...defaults, ...saved, phase_plan: { ...defaultPhasePlan, ...saved.phase_plan } } } catch { return defaults } })
   const [draft, setDraft] = useState<Config>(config)
   const [report, setReport] = useState<Report | null>(null)
@@ -171,17 +173,29 @@ function App() {
   const mainContent = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const wasMobileNavOpen = useRef(false)
-  const activeScenario = recordedVideo
+  const activeScenario = videoScenarios.find(item => item.id === scenarioId) ?? fallbackVideo
   const isVideoScenario = true
   useEffect(() => {
     let cancelled = false
+    fetch('/api/scenarios')
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then((items: Scenario[]) => {
+        if (cancelled) return
+        const videos = items.filter(item => item.kind === 'video')
+        if (videos.length) setVideoScenarios(videos)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+  useEffect(() => {
+    let cancelled = false
     setLoading(true); setError(''); setPlaying(false); setCurrent(0)
-    fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario_id: recordedVideo.id, config }) })
+    fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario_id: scenarioId, config }) })
       .then(r => r.ok ? r.json() : Promise.reject(new Error('Служба демонстрации недоступна. Запустите сервер на порту 8000.')))
       .then(data => { if (!cancelled) { setReport(data); setLoading(false) } })
       .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
     return () => { cancelled = true }
-  }, [config])
+  }, [config, scenarioId])
   useEffect(() => { if (!playing || !report || isVideoScenario) return; const id = window.setInterval(() => setCurrent(t => { if (t >= report.frames.length - 1) { setPlaying(false); return t } return t + 1 }), 1000 / speed); return () => clearInterval(id) }, [playing, speed, report, isVideoScenario])
   useEffect(() => {
     if (!isVideoScenario || page !== 'dashboard' || !report || !videoRef.current) return
@@ -217,9 +231,9 @@ function App() {
   const frame = report?.frames[current]
   const framePhase = frame ? visiblePhase(frame) : 'vehicle_green'
   const frameReason = frame ? visibleReason(frame) : ''
-  const frameMode = frame?.display_phase ? 'Виртуальный контроллер' : frame ? modeLabel[frame.mode] : ''
-  const displayEvents = report?.events ?? []
-  const scenario = activeScenario
+  const frameMode = frame?.display_phase ? 'По видеозаписи' : frame ? modeLabel[frame.mode] : ''
+  const displayEvents = report?.display_events ?? report?.events ?? []
+  const scenario = report?.scenario ?? activeScenario
   const seekToSecond = (second: number) => { setCurrent(second); if (isVideoScenario && videoRef.current) videoRef.current.currentTime = second }
   const togglePlayback = () => { if (report && current >= report.frames.length - 1 && !playing) seekToSecond(0); setPlaying(!playing) }
   const replay = () => { setConfig({ ...draft }); localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(draft)); setPage('dashboard'); setToast('Параметры сохранены. Модель пересчитана по записи.') }
@@ -233,7 +247,7 @@ function App() {
     {mobileNav && <button className="mobile-backdrop" tabIndex={-1} aria-label="Закрыть меню" onClick={() => setMobileNav(false)}/>}
     <main ref={mainContent} className="main" id="main-content"><header className="topbar"><button ref={menuTrigger} className="mobile-menu" onClick={() => setMobileNav(true)} aria-label="Открыть меню" aria-controls="navigation-drawer" aria-expanded={mobileNav}><Menu size={21}/></button><div className="breadcrumb">Система управления <span>/</span> <strong>{nav.find(x => x.id === page)?.label}</strong></div><div className="top-actions"><span className="demo-badge"><span/> ДЕМО-РЕЖИМ</span><span className="top-separator"/><span className="operator-avatar">О</span><div className="operator-name"><strong>Оператор</strong></div></div></header>
       <div className="content">
-        <div className="page-intro"><div><span className="eyebrow">ПЕШЕХОДНЫЙ ПЕРЕХОД № 01 <span>/</span> {page === 'simulator' ? 'ВИРТУАЛЬНЫЙ СЦЕНАРИЙ' : 'ЗАПИСЬ КОМПЬЮТЕРНОГО ЗРЕНИЯ'}</span><h1>{page === 'dashboard' ? 'Просмотр записи перехода' : page === 'simulator' ? 'Симулятор дорожной обстановки' : page === 'analytics' ? 'Данные записи и модель' : page === 'logic' ? 'Логика виртуального контроллера' : 'Настройки контроллера'}</h1><p>{page === 'dashboard' ? 'Просматривайте запись и данные о дорожной ситуации.' : page === 'simulator' ? 'Меняйте фазы и наблюдайте, как движутся машины и пешеходы.' : page === 'analytics' ? 'Наблюдения компьютерного зрения и расчёт виртуального контроллера.' : page === 'logic' ? 'Как виртуальный контроллер рассчитывает фазы на данных записи.' : 'Выберите режим, настройте фазы и пересчитайте запись.'}</p></div><div className="intro-actions">{page === 'analytics' && <button className="button secondary" onClick={downloadCSV}><ArrowDownToLine size={17}/> Выгрузить таблицу</button>}</div></div>
+        <div className="page-intro"><div><span className="eyebrow">ПЕШЕХОДНЫЙ ПЕРЕХОД № 01 <span>/</span> {page === 'simulator' ? 'ВИРТУАЛЬНЫЙ СЦЕНАРИЙ' : `${activeScenario.period?.toUpperCase() ?? 'ЗАПИСЬ'} · КОМПЬЮТЕРНОЕ ЗРЕНИЕ`}</span><h1>{page === 'dashboard' ? 'Просмотр записи перехода' : page === 'simulator' ? 'Симулятор дорожной обстановки' : page === 'analytics' ? 'Данные записи и модель' : page === 'logic' ? 'Логика виртуального контроллера' : 'Настройки контроллера'}</h1><p>{page === 'dashboard' ? activeScenario.description : page === 'simulator' ? 'Меняйте фазы и наблюдайте, как движутся машины и пешеходы.' : page === 'analytics' ? 'Наблюдения компьютерного зрения и расчёт виртуального контроллера.' : page === 'logic' ? 'Как виртуальный контроллер рассчитывает фазы на данных записи.' : 'Выберите режим, настройте фазы и пересчитайте запись.'}</p></div><div className="intro-actions">{page !== 'simulator' && <div className="scenario-select"><span>ВИДЕОЗАПИСЬ</span><select value={scenarioId} onChange={event => setScenarioId(event.target.value)} aria-label="Выбрать видеозапись">{videoScenarios.map(item => <option key={item.id} value={item.id}>{item.name} · {item.period}</option>)}</select><ChevronDown size={16}/></div>}{page === 'analytics' && <button className="button secondary" onClick={downloadCSV}><ArrowDownToLine size={17}/> Выгрузить таблицу</button>}</div></div>
         {page === 'simulator' && <Suspense fallback={<div className="loading-state">Загрузка симулятора…</div>}><Simulator initialConfig={config}/></Suspense>}
         {page !== 'simulator' && loading && <div className="loading-state" role="status" aria-live="polite"><div className="spinner"/>Загрузка записи компьютерного зрения…</div>}
         {page !== 'simulator' && error && <div className="error-state" role="alert"><TriangleAlert size={22}/><div><strong>Не удалось загрузить данные</strong><p>{error}</p></div><button className="button" onClick={() => setConfig({ ...config })}>Повторить</button></div>}

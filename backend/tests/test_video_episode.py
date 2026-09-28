@@ -13,9 +13,14 @@ def test_video_episode_uses_json_observations_and_summary():
     scenarios = client.get("/api/scenarios").json()
     assert scenarios[0]["id"] == "video"
     assert scenarios[0]["kind"] == "video"
-    assert scenarios[0]["period"] == "Текущий ролик"
+    assert scenarios[0]["period"] == "День"
     assert scenarios[0]["video_url"] == "/api/videos/video"
     assert scenarios[0]["duration"] == len(observations) == 162
+    assert [(item["id"], item["period"], item["duration"]) for item in scenarios[:3]] == [
+        ("video", "День", 162),
+        ("morning", "Утро", 101),
+        ("night", "Ночь", 95),
+    ]
 
     response = client.post("/api/simulate", json={"scenario_id": "video"})
     assert response.status_code == 200
@@ -62,11 +67,12 @@ def test_recording_phase_overlay_ignores_short_cv_bursts_and_matches_crossing():
 
 def test_video_endpoint_supports_browser_range_requests():
     client = TestClient(app)
-    response = client.get("/api/videos/video", headers={"Range": "bytes=0-1023"})
-    assert response.status_code == 206
-    assert response.headers["content-type"].startswith("video/mp4")
-    assert response.headers["content-range"].startswith("bytes 0-1023/")
-    assert len(response.content) == 1024
+    for episode_id in ("video", "morning", "night"):
+        response = client.get(f"/api/videos/{episode_id}", headers={"Range": "bytes=0-1023"})
+        assert response.status_code == 206
+        assert response.headers["content-type"].startswith("video/mp4")
+        assert response.headers["content-range"].startswith("bytes 0-1023/")
+        assert len(response.content) == 1024
     assert client.get("/api/videos/missing").status_code == 404
     assert client.get("/api/video", headers={"Range": "bytes=0-15"}).status_code == 206
 

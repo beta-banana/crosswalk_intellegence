@@ -43,16 +43,35 @@ class VideoEpisode:
         return PROJECT_ROOT / self.video_filename
 
 
-# To add another preprocessed recording, place its MP4 and JSON in the project
-# root and add one entry here. No upload endpoint is required for the demo.
+# Prepared recordings stay in the project next to their CV JSON. The short ids
+# are stable API/UI identifiers; the original folder names are kept untouched.
 VIDEO_EPISODES = (
     VideoEpisode(
         id=VIDEO_ID,
-        name="Переход · запись CV",
-        description="Новая обработанная запись и синхронные посекундные наблюдения",
-        json_filename="video_and_json/result_crosswalk.json",
-        video_filename="video_and_json/result_crosswalk_web.mp4",
-        period="Текущий ролик",
+        name="Дневная запись",
+        description="Дневные условия: основной эпизод с активным движением пешеходов по переходу",
+        json_filename="video_and_json/НА 3/result_crosswalk.json",
+        video_filename="video_and_json/НА 3/result_crosswalk_web.mp4",
+        period="День",
+        tone="day",
+    ),
+    VideoEpisode(
+        id="morning",
+        name="Утренняя запись",
+        description="Утренние условия: естественное освещение и меняющаяся интенсивность потока",
+        json_filename="video_and_json/НА 2/result_crosswalk.json",
+        video_filename="video_and_json/НА 2/result_crosswalk_web.mp4",
+        period="Утро",
+        tone="morning",
+    ),
+    VideoEpisode(
+        id="night",
+        name="Ночная запись",
+        description="Низкая освещённость: проверка распознавания транспорта и пешеходов ночью",
+        json_filename="video_and_json/НА/result_crosswalk.json",
+        video_filename="video_and_json/НА/result_crosswalk_web.mp4",
+        period="Ночь",
+        tone="night",
     ),
 )
 VIDEO_EPISODES_BY_ID = {episode.id: episode for episode in VIDEO_EPISODES}
